@@ -86,7 +86,7 @@ However, **Wrtnlabs** does not recommend to writing code down into the [Main Pro
 
 Therefore, if you want to add a new feature in the API level, define the matched data entity in the [prisma](prisma) and [src/api/structures](src/api/structures) directories. After the data entity definition, declare function header in the matched API controller class in the [src/controllers](src/controllers). Note that, it's only the declaration, header only, not meaning to implement the function body.
 
-After those declarations, build the client [SDK](#sdk) through the `npm run build:api` command and implement the [Test Automation Program](#test-automation-program) using the [SDK](#sdk) with use case scenarios. Development of the [Main Program](#main-program-development) should be started after those preparations are all being ready. Of course, the [Main Program](#main-program-development) can be verified with the pre-developed [Test Automation Program](#test-automation-program) in everytime.
+After those declarations, build the client [SDK](#sdk) through the `pnpm run build:api` command and implement the [Test Automation Program](#test-automation-program) using the [SDK](#sdk) with use case scenarios. Development of the [Main Program](#main-program-development) should be started after those preparations are all being ready. Of course, the [Main Program](#main-program-development) can be verified with the pre-developed [Test Automation Program](#test-automation-program) in everytime.
 
 - Declare data entity (`prisma` schema file)
 - Design API function types, without main program implementation
@@ -113,18 +113,18 @@ Also, the Test Automation Program runs all of the test functions placed into the
 
 ```bash
 # test without db reset
-npm run test -- --reset false
+pnpm run test --reset false
 
 # include or exclude some features
-npm run test -- --include something
-npm run test -- --include cart order issue
-npm run test -- --include cart order issue --exclude index deposit
+pnpm run test --include something
+pnpm run test --include cart order issue
+pnpm run test --include cart order issue --exclude index deposit
 
 # run performance benchmark program
-npm run benchmark
+pnpm run benchmark
 ```
 
-For reference, if you run `npm run benchmark` command, your test functions defined in the [test/features/api](test/features/api) directory would be utilized for performance benchmarking. If you want to see the performance bench result earlier, visit below link please:
+For reference, if you run `pnpm run benchmark` command, your test functions defined in the [test/features/api](test/features/api) directory would be utilized for performance benchmarking. If you want to see the performance bench result earlier, visit below link please:
 
 - [docs/benchmarks/AMD Ryzen 9 7940HS w Radeon 780M Graphics.md](docs/benchmarks/api/AMD%20Ryzen%209%207940HS%20w%20Radeon%20780M%20Graphics.md)
 - [docs/benchmarks/Apple m2 pro](docs/benchmarks/api/Apple%20M2%20Pro.md)

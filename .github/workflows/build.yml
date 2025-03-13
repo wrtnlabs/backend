@@ -35,4 +35,4 @@ jobs:
         run: pnpm run schema postgres root
 
       - name: Test Backend-Server
-        run: pnpm run test -- --reset true --simultaneous 16
+        run: pnpm run test --reset true --simultaneous 16
