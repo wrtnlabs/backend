@@ -11,7 +11,7 @@ import { sleep_for } from "tstl";
 import { HubConfiguration } from "./HubConfiguration";
 import { HubGlobal } from "./HubGlobal";
 import { HubModule } from "./HubModule";
-import { HttpExceptionFilter } from "./pipes/HttpExceptionFIlter";
+import { HttpExceptionFilter } from "./pipes/HttpExceptionFilters";
 
 export class HubBackend {
   private application_?: NestFastifyApplication;

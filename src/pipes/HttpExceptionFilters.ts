@@ -11,12 +11,6 @@ import { BaseExceptionFilter } from "@nestjs/core";
 import { JwtTokenService } from "../services/JwtTokenService";
 import { ErrorUtil } from "../utils/ErrorUtil";
 
-interface IResponse {
-  req: any;
-  customer_id: string | null;
-  err: any;
-}
-
 @Catch()
 export class HttpExceptionFilter extends BaseExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -70,4 +64,10 @@ export class HttpExceptionFilter extends BaseExceptionFilter {
       return null;
     }
   }
+}
+
+interface IResponse {
+  req: any;
+  customer_id: string | null;
+  err: any;
 }
