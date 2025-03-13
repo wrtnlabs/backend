@@ -18,7 +18,6 @@
 - [External](#external)
 - [Applications](#applications)
 - [Repositories](#repositories)
-- [default](#default)
 
 ## Articles
 ```mermaid
@@ -87,122 +86,122 @@ Attachments.
 Attachment entities used everywhere in this DB.
 
 **Properties**
-  - `id`: 
-  - `name`: File name, excluding extension.
-  - `extension`: Extension.
-  - `url`: URL path to the file.
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `name`: File name, excluding extension.
+- `extension`: Extension.
+- `url`: URL path to the file.
+- `created_at`: The date and time the record was created.
 
 ### `bbs_articles`
 Article entity.
 
-`bbs_articles` is a supertype entity for all types of articles existing 
-in the current exchange system, and literally embodies individual articles 
+`bbs_articles` is a supertype entity for all types of articles existing
+in the current exchange system, and literally embodies individual articles
 on the bulletin board.
 
-And elements such as titles and texts that must exist in articles do not exist 
-in this `bbs_articles`, but exist in a 1:N relationship in the lower entity, 
-[bbs_article_snapshots](#bbs_article_snapshots), because a new snapshot record is issued every time 
+And elements such as titles and texts that must exist in articles do not exist
+in this `bbs_articles`, but exist in a 1:N relationship in the lower entity,
+[bbs_article_snapshots](#bbs_article_snapshots), because a new snapshot record is issued every time
 an article is modified.
 
-The reason for issuing a new snapshot record every time an article is modified 
-is to preserve evidence. Due to the nature of e-commerce, there is always 
+The reason for issuing a new snapshot record every time an article is modified
+is to preserve evidence. Due to the nature of e-commerce, there is always
 a threat of conflict between participants.
 
-And disputes can arise through articles or comments on them, and in this case, 
-articles are designed in this structure to prevent manipulation of the situation 
+And disputes can arise through articles or comments on them, and in this case,
+articles are designed in this structure to prevent manipulation of the situation
 by modifying existing articles.
 
 To prevent so-called 'undercutting', keeping evidence and preventing fraud.
 
 **Properties**
-  - `id`: 
-  - `type`: The type of subtype.
-  - `created_at`: The date and time the article was created.
-  - `deleted_at`: Date and time of article deletion.
+- `id`:
+- `type`: The type of subtype.
+- `created_at`: The date and time the article was created.
+- `deleted_at`: Date and time of article deletion.
 
 ### `bbs_article_snapshots`
 Article Snapshots
 
-`bbs_article_snapshots` is a snapshot entity that contains the content of 
-an article. As explained in [bbs_articles](#bbs_articles), the content is separated 
+`bbs_article_snapshots` is a snapshot entity that contains the content of
+an article. As explained in [bbs_articles](#bbs_articles), the content is separated
 from the article record to prevent undercutting.
 
 **Properties**
-  - `id`: Primary Key.
-  - `bbs_article_id`: [bbs_articles.id](#bbs_articles) of the attached article
-  - `format`
-    > Format of the body.
-    > 
-    > Similar meanings of extensions: html, md, txt, etc.
-  - `title`: Title of the article
-  - `body`: Article body content
-  - `created_at`
-    > Record creation date.
-    > 
-    > When the article was first created or edited.
+- `id`: Primary Key.
+- `bbs_article_id`: [bbs_articles.id](#bbs_articles) of the attached article
+- `format`
+  > Format of the body.
+  >
+  > Similar meanings of extensions: html, md, txt, etc.
+- `title`: Title of the article
+- `body`: Article body content
+- `created_at`
+  > Record creation date.
+  >
+  > When the article was first created or edited.
 
 ### `bbs_article_snapshot_files`
 Attachment files of article snapshots.
 
-`bbs_article_snapshot_files` is an entity that visualizes attachment files 
+`bbs_article_snapshot_files` is an entity that visualizes attachment files
 of article snapshots.
 
-`bbs_article_snapshot_files` is a typical pair relationship table that 
+`bbs_article_snapshot_files` is a typical pair relationship table that
 resolves the M: N relationship between [bbs_article_snapshots](#bbs_article_snapshots) and
-[attachment_files](#attachment_files). And to ensure the order of attachment files, it has 
-an additional property, [bbs_article_snapshot_files.sequence](#bbs_article_snapshot_files). 
+[attachment_files](#attachment_files). And to ensure the order of attachment files, it has
+an additional property, [bbs_article_snapshot_files.sequence](#bbs_article_snapshot_files).
 
-This is a pattern that we will continue to see in the future, so let's get 
+This is a pattern that we will continue to see in the future, so let's get
 used to it in advance.
 
 **Properties**
-  - `id`: 
-  - `bbs_article_snapshot_id`: [bbs_article_snapshots.id](#bbs_article_snapshots) of the attributed article snapshot
-  - `attachment_file_id`: [attachment_files.id](#attachment_files)
-  - `sequence`: The order in which attachments are placed in the article snapshot.
+- `id`:
+- `bbs_article_snapshot_id`: [bbs_article_snapshots.id](#bbs_article_snapshots) of the attributed article snapshot
+- `attachment_file_id`: [attachment_files.id](#attachment_files)
+- `sequence`: The order in which attachments are placed in the article snapshot.
 
 ### `bbs_article_comments`
 Comments written on an article.
 
 `bbs_article_comments` is an entity that visualizes comments written on an article.
 
-And this comment, as in the relationship between [bbs_articles](#bbs_articles) 
+And this comment, as in the relationship between [bbs_articles](#bbs_articles)
 and [bbs_article_snapshots](#bbs_article_snapshots), is stored in the subordinate
-[bbs_article_comment_snapshots](#bbs_article_comment_snapshots) for evidentialism, and a new snapshot 
+[bbs_article_comment_snapshots](#bbs_article_comment_snapshots) for evidentialism, and a new snapshot
 record is issued whenever a comment is modified.
 
-In addition, the relationship between replies is expressed through the 
+In addition, the relationship between replies is expressed through the
 [bbs_article_comments.parent_id](#bbs_article_comments) property.
 
 **Properties**
-  - `id`: 
-  - `bbs_article_id`: [bbs_articles.id](#bbs_articles) of the attached article.
-  - `parent_id`
-    > The ID of the parent comment.
-    > 
-    > Used when writing a reply.
-  - `type`: The type of subtype.
-  - `created_at`: Comment creation date and time.
-  - `deleted_at`: Comment deletion date and time.
+- `id`:
+- `bbs_article_id`: [bbs_articles.id](#bbs_articles) of the attached article.
+- `parent_id`
+  > The ID of the parent comment.
+  >
+  > Used when writing a reply.
+- `type`: The type of subtype.
+- `created_at`: Comment creation date and time.
+- `deleted_at`: Comment deletion date and time.
 
 ### `bbs_article_comment_snapshots`
 Comment snapshots.
 
-`bbs_article_comment_snapshots` is a snapshot entity that contains 
+`bbs_article_comment_snapshots` is a snapshot entity that contains
 the main content of the comment.
 
 As explained in [bbs_article_comments](#bbs_article_comments) above, to prevent undercutting.
 
 **Properties**
-  - `id`: 
-  - `bbs_article_comment_id`: [bbs_article_comments.id](#bbs_article_comments) of the comment on the attached article.
-  - `format`
-    > Format of the body.
-    > 
-    > Similar meanings of extensions: html, md, txt, etc.
-  - `body`: Comment body.
-  - `created_at`: Record creation date and time (when the comment was first created or edited)
+- `id`:
+- `bbs_article_comment_id`: [bbs_article_comments.id](#bbs_article_comments) of the comment on the attached article.
+- `format`
+  > Format of the body.
+  >
+  > Similar meanings of extensions: html, md, txt, etc.
+- `body`: Comment body.
+- `created_at`: Record creation date and time (when the comment was first created or edited)
 
 ### `bbs_article_comment_snapshot_files`
 Attachments to comment snapshots.
@@ -212,13 +211,13 @@ Attachments to comment snapshots.
 M: N relationship resolution.
 
 **Properties**
-  - `id`: 
-  - `bbs_article_comment_snapshot_id`: [bbs_article_comment_snapshots.id](#bbs_article_comment_snapshots) of the attributed comment snapshot
-  - `attachment_file_id`: [attachment_files.id](#attachment_files)
-  - `sequence`
-    > Batch order.
-    > 
-    > The order in which the files attached to the comment snapshot are placed.
+- `id`:
+- `bbs_article_comment_snapshot_id`: [bbs_article_comment_snapshots.id](#bbs_article_comment_snapshots) of the attributed comment snapshot
+- `attachment_file_id`: [attachment_files.id](#attachment_files)
+- `sequence`
+  > Batch order.
+  >
+  > The order in which the files attached to the comment snapshot are placed.
 
 
 ## Systematic
@@ -228,6 +227,7 @@ erDiagram
   String id PK
   String code UK
   String name UK
+  Boolean exclusive
   DateTime created_at
   DateTime updated_at
   DateTime deleted_at "nullable"
@@ -242,6 +242,12 @@ erDiagram
   DateTime created_at
   DateTime updated_at
   DateTime deleted_at "nullable"
+}
+"hub_channel_category_names" {
+  String id PK
+  String hub_channel_category_id FK
+  String name
+  String lang_code
 }
 "hub_sections" {
   String id PK
@@ -280,62 +286,76 @@ erDiagram
   DateTime activated_at "nullable"
   DateTime expired_at "nullable"
 }
-"hub_sale_snapshot_categories" {
+"hub_sale_snapshot_channels" {
   String id PK
   String hub_sale_snapshot_id FK
+  String hub_channel_id FK
+  Int sequence
+}
+"hub_sale_snapshot_channel_categories" {
+  String id PK
+  String hub_sale_snapshot_channel_id FK
   String hub_channel_category_id FK
   Int sequence
 }
 "hub_channel_categories" }o--|| "hub_channels" : channel
 "hub_channel_categories" }o--o| "hub_channel_categories" : parent
+"hub_channel_category_names" }o--|| "hub_channel_categories" : category
 "studio_channel_categories" }o--|| "hub_channels" : channel
 "studio_channel_categories" }o--o| "studio_channel_categories" : parent
 "hub_sales" }o--|| "hub_sections" : section
 "hub_sale_snapshots" }|--|| "hub_sales" : sale
-"hub_sale_snapshot_categories" }o--|| "hub_sale_snapshots" : snapshot
-"hub_sale_snapshot_categories" }o--|| "hub_channel_categories" : category
+"hub_sale_snapshot_channels" }o--|| "hub_sale_snapshots" : snapshot
+"hub_sale_snapshot_channels" }o--|| "hub_channels" : channel
+"hub_sale_snapshot_channel_categories" }o--|| "hub_sale_snapshot_channels" : to_channel
+"hub_sale_snapshot_channel_categories" }o--|| "hub_channel_categories" : category
 ```
 
 ### `hub_channels`
 Hub channel information.
 
-`hub_channels` is a concept that visualizes distribution channels in the 
-API brokerage market. In this system, a different channel means a different site or 
-application. Therefore, Wrtn Generative Hub (https://hub.wrtn.com, tentative name) 
-is also a channel. 
+`hub_channels` is a concept that visualizes distribution channels in the
+API brokerage market. In this system, a different channel means a different site or
+application. Therefore, Wrtn Generative Hub (https://hub.wrtn.com, tentative name)
+is also a channel.
 
-Of course, Generative Hub currently has only one channel, but it is prepared in 
-advance for future scalability. Like [hub_external_users](#hub_external_users), it is a concept 
-designed in advance for possible future partnerships. For reference, if Wrtn launches 
-another site (application) with a different brand name other than Generative Hub, or 
-Wrtn uses it for embedding (`<iframe/>`) when you are launching a simple hub site and 
+Of course, Generative Hub currently has only one channel, but it is prepared in
+advance for future scalability. Like [hub_external_users](#hub_external_users), it is a concept
+designed in advance for possible future partnerships. For reference, if Wrtn launches
+another site (application) with a different brand name other than Generative Hub, or
+Wrtn uses it for embedding (`<iframe/>`) when you are launching a simple hub site and
 distributing it to partners, you will also need a new channel.
 
 > The basic code is `wrtn`
 
 **Properties**
-  - `id`: 
-  - `code`: Identifier code.
-  - `name`: Channel name.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time of record edit.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `code`: Identifier code.
+- `name`: Channel name.
+- `exclusive`
+  > Exclusivity.
+  >
+  > If this value is `true`, the channel is isolated from other channels,
+  > and does not share customer information.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time of record edit.
+- `deleted_at`: Date and time of record deletion.
 
 ### `hub_channel_categories`
 Channel category information.
 
-`hub_channel_categories` is a concept that means a classification category 
-within a specific channel, and it is exactly the same as the concept that is 
+`hub_channel_categories` is a concept that means a classification category
+within a specific channel, and it is exactly the same as the concept that is
 usually referred to as "category" in shopping malls.
 
-And `hub_channel_categories` means a "corner", which is an independent spatial 
-information in offline markets, and unlike [items](#hub_sales), which cannot 
-be simultaneously classified, one item can be simultaneously classified in 
+And `hub_channel_categories` means a "corner", which is an independent spatial
+information in offline markets, and unlike [items](#hub_sales), which cannot
+be simultaneously classified, one item can be simultaneously classified in
 multiple categories.
 
-For example, beef and grapes can belong to the fruit corner and the meat corner, 
-respectively, but they do not belong to any of the categories, and can form 
-independent M: N relationships with various categories according to the 
+For example, beef and grapes can belong to the fruit corner and the meat corner,
+respectively, but they do not belong to any of the categories, and can form
+independent M: N relationships with various categories according to the
 characteristics of each product.
 
 Product | Corner | Category
@@ -343,82 +363,94 @@ Product | Corner | Category
 Beef | Meat Corner | Frozen Food, Meat, Specialty Food
 Grapes | Fruit Corner | Fresh food, convenience food
 
-In addition, categories have a 1: N recursive structure, so hierarchical 
-expressions are possible as shown below. Also, categories can be set differently 
-for each [channel](#hub_channels), so each [channel](#hub_channels) can 
+In addition, categories have a 1: N recursive structure, so hierarchical
+expressions are possible as shown below. Also, categories can be set differently
+for each [channel](#hub_channels), so each [channel](#hub_channels) can
 freely set the category classification they want.
 
 - Grocery > Meat > Frozen
 - Electronic devices > Laptop > 15-inch
 - Miscellaneous goods > Wallets
 
-For reference, since the API supports (or plans to support) a merge function 
+For reference, since the API supports (or plans to support) a merge function
 between multiple categories, there will be no particular burden in constantly
 editing categories.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel.
-  - `parent_id`
-    > [hub_channel_categories.id](#hub_channel_categories) of the parent category.
-    > 
-    > If it corresponds to a subcategory of a specific category.
-  - `name`
-    > English name.
-    > 
-    > English name participates in the unique constraint.
-  - `background_color`: Category background color.
-  - `background_image_url`: Category background image.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel.
+- `parent_id`
+  > [hub_channel_categories.id](#hub_channel_categories) of the parent category.
+  >
+  > If it corresponds to a subcategory of a specific category.
+- `name`
+  > English name.
+  >
+  > English name participates in the unique constraint.
+- `background_color`: Category background color.
+- `background_image_url`: Category background image.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
+
+### `hub_channel_category_names`
+Channel category name information.
+
+`hub_channel_category_names` is an entity that visualizes the category name
+in multiple languages within the channel.
+
+**Properties**
+- `id`:
+- `hub_channel_category_id`:
+- `name`:
+- `lang_code`:
 
 ### `hub_sections`
 Section information.
 
 `hub_sections` is an entity designed to express section information in the market.
 
-If we compare the section mentioned here to a mart, it means a spatially 
-separated area in the store, such as "fruit corner" or "meat corner." Currently, 
-the only section that exists in Luton's Generative Hub is "API Market", 
+If we compare the section mentioned here to a mart, it means a spatially
+separated area in the store, such as "fruit corner" or "meat corner." Currently,
+the only section that exists in Luton's Generative Hub is "API Market",
 but it is a concept designed in advance for future expansion.
 
 And unlike [listing](#hub_sales), which can be simultaneously classified,
-sections can only be classified for one listing. In other words, one listing 
+sections can only be classified for one listing. In other words, one listing
 can only belong to one section.
 
 > The basic code is `generative`
 
 **Properties**
-  - `id`: 
-  - `code`: Identifier code.
-  - `name`: Section name.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `code`: Identifier code.
+- `name`: Section name.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_channel_categories`
 Channel-specific category information of the studio.
 
-`studio_channel_categories` is an entity that visualizes the channel-specific 
-classification categories in the studio, and it is exactly the same as the 
+`studio_channel_categories` is an entity that visualizes the channel-specific
+classification categories in the studio, and it is exactly the same as the
 concept of "category" that is commonly referred to in shopping malls.
 
-And compared to [hub_channel_categories](#hub_channel_categories), the only difference is whether 
-the target is an API brokerage exchange or a studio asset, but their roles are 
+And compared to [hub_channel_categories](#hub_channel_categories), the only difference is whether
+the target is an API brokerage exchange or a studio asset, but their roles are
 the same.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel.
-  - `parent_id`
-    > [studio_channel_categories.id](#studio_channel_categories) of the parent category.
-    > 
-    > If it corresponds to a subcategory of a specific category.
-  - `name`: Category name.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel.
+- `parent_id`
+  > [studio_channel_categories.id](#studio_channel_categories) of the parent category.
+  >
+  > If it corresponds to a subcategory of a specific category.
+- `name`: Category name.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 
 ## Actors
@@ -567,65 +599,65 @@ erDiagram
 ### `hub_customers`
 Customer information, but based on access criteria, not people.
 
-`hub_customers` is an entity that literally embodies the information of 
-those who participated in the market as customers. `hub_customers` issues 
+`hub_customers` is an entity that literally embodies the information of
+those who participated in the market as customers. `hub_customers` issues
 a new record for each access, even if they are the same person.
 
-The first purpose is to track the customer inflow path in detail, 
-and the second is to prevent cases where the same person enters as a non-member, 
-diligently puts [items](#hub_sales) in the 
-[shopping cart](#hub_cart_commodities) in advance, and only then does 
-[real name verification](#hub_citizens) or 
-[membership registration/login](#hub_members) at the moment of payment. 
+The first purpose is to track the customer inflow path in detail,
+and the second is to prevent cases where the same person enters as a non-member,
+diligently puts [items](#hub_sales) in the
+[shopping cart](#hub_cart_commodities) in advance, and only then does
+[real name verification](#hub_citizens) or
+[membership registration/login](#hub_members) at the moment of payment.
 Lastly, the same person also accesses [external service](#hub_external_users),
-purchases [hub_orders](#hub_orders), creates multiple [accounts](#hub_members) 
-to make purchases, purchases after only authenticating their real names as 
-non-members, and sometimes acts as a [seller](#hub_sellers) or 
-[administrator](#hub_administrators), to accurately track the activities that 
+purchases [hub_orders](#hub_orders), creates multiple [accounts](#hub_members)
+to make purchases, purchases after only authenticating their real names as
+non-members, and sometimes acts as a [seller](#hub_sellers) or
+[administrator](#hub_administrators), to accurately track the activities that
 one person does on the exchange in various ways.
 
-Therefore, `hub_customers` can have multiple records with the same 
-[hub_citizens](#hub_citizens) or [hub_members](#hub_members) and [hub_external_users](#hub_external_users). 
-Also, if a customer signs up for membership after authenticating their real name, 
-or signs up for our service after being an external service user, all related 
-records are changed at once. Therefore, customer identification and tracking 
+Therefore, `hub_customers` can have multiple records with the same
+[hub_citizens](#hub_citizens) or [hub_members](#hub_members) and [hub_external_users](#hub_external_users).
+Also, if a customer signs up for membership after authenticating their real name,
+or signs up for our service after being an external service user, all related
+records are changed at once. Therefore, customer identification and tracking
 can be done very systematically.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `hub_external_user_id`: [hub_external_users.id](#hub_external_users)
-  - `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizenship
-  - `href`
-    > Access address
-    > 
-    > Use [window.location.href](#window)
-  - `referrer`
-    > Referrer URL on browser.
-    > 
-    > Use [window.document.referrer](#window)
-  - `ip`: IP 주소.
-  - `readonly`: Whether read-only or not.
-  - `lang_code`: 
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `hub_external_user_id`: [hub_external_users.id](#hub_external_users)
+- `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizenship
+- `href`
+  > Access address
+  >
+  > Use [window.location.href](#window)
+- `referrer`
+  > Referrer URL on browser.
+  >
+  > Use [window.document.referrer](#window)
+- `ip`: IP 주소.
+- `readonly`: Whether read-only or not.
+- `lang_code`:
+- `created_at`: The date and time the record was created.
 
 ### `hub_authenticate_tokens`
 A personal API KEY that can access the API.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_customer_id`: Affiliate member's [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `title`: API KEY title.
-  - `value`: API KEY value.
-  - `expired_at`
-    > KEY expiration date.
-    > 
-    > If null, unlimited KEY with no expiration date.
-  - `created_at`: Record creation date and time
-  - `deleted_at`: Record deletion date
+- `id`:
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_customer_id`: Affiliate member's [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `title`: API KEY title.
+- `value`: API KEY value.
+- `expired_at`
+  > KEY expiration date.
+  >
+  > If null, unlimited KEY with no expiration date.
+- `created_at`: Record creation date and time
+- `deleted_at`: Record deletion date
 
 ### `hub_external_users`
 External user information.
@@ -652,27 +684,27 @@ In addition, additional information received from external services can be
 recorded in the `data` field in JSON format.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel
-  - `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizens
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `hub_external_user_content_id`: [hub_external_user_contents.id](#hub_external_user_contents)
-  - `application`
-    > The identifier code of the external service.
-    > 
-    > It is most likely the same as [hub_channels.code](#hub_channels).
-  - `uid`: An identifier key for that user in an external service.
-  - `nickname`: User nickname on external services.
-  - `data`: Additional information from external services.
-  - `password`
-    > System password for external service users.
-    > 
-    > This is a password issued by the external service to the user,
-    > and is never the actual user password. However, it is used to determine
-    > whether a customer who entered the same `application` and `code` as the
-    > current external system user is considered a valid external system user
-    > or a violation.
-  - `created_at`: Record creation date and time (first external user authentication date and time)
+- `id`:
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel
+- `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizens
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `hub_external_user_content_id`: [hub_external_user_contents.id](#hub_external_user_contents)
+- `application`
+  > The identifier code of the external service.
+  >
+  > It is most likely the same as [hub_channels.code](#hub_channels).
+- `uid`: An identifier key for that user in an external service.
+- `nickname`: User nickname on external services.
+- `data`: Additional information from external services.
+- `password`
+  > System password for external service users.
+  >
+  > This is a password issued by the external service to the user,
+  > and is never the actual user password. However, it is used to determine
+  > whether a customer who entered the same `application` and `code` as the
+  > current external system user is considered a valid external system user
+  > or a violation.
+- `created_at`: Record creation date and time (first external user authentication date and time)
 
 ### `hub_external_user_contents`
 Additional information for external user content.
@@ -680,22 +712,22 @@ Additional information for external user content.
 `hub_external_user_contents` is an entity that records additional information for [external user content](#hub_external_users).
 
 **Properties**
-  - `id`: 
-  - `jobs`: List of user job information.
-  - `gender`: User gender information.
-  - `birthYear`: User's date of birth.
-  - `interests`: User interest information.
-  - `provider`: User's primary provider information.
-  - `purposes`: User Key Consumer Information.
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `jobs`: List of user job information.
+- `gender`: User gender information.
+- `birthYear`: User's date of birth.
+- `interests`: User interest information.
+- `provider`: User's primary provider information.
+- `purposes`: User Key Consumer Information.
+- `created_at`: The date and time the record was created.
 
 ### `beta_user`
 Beta Tester User Information.
 
 **Properties**
-  - `id`: ---
-  - `email`: Email address.
-  - `created_at`: The date and time the record was created.
+- `id`: ---
+- `email`: Email address.
+- `created_at`: The date and time the record was created.
 
 ### `hub_citizens`
 Citizen authentication information.
@@ -712,26 +744,26 @@ Of course, real name and mobile phone authentication information are encrypted
 and stored.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_id`
-    > [hub_channels.id](#hub_channels) of the affiliated channel
-    > 
-    > This is to manage personal information separately for each channel,
-    > and also to recognize cases where the same citizen is authenticated
-    > on different channels.
-  - `mobile`
-    > Mobile phone number.
-    > 
-    > It is stored encrypted, so like searches are not possible.
-  - `name`
-    > Real name or a similar name.
-    > 
-    > It is stored encrypted, so like searches are absolutely impossible.
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`
-    > Date of record deletion.
-    > 
-    > This is mainly due to destruction of personal information.
+- `id`:
+- `hub_channel_id`
+  > [hub_channels.id](#hub_channels) of the affiliated channel
+  >
+  > This is to manage personal information separately for each channel,
+  > and also to recognize cases where the same citizen is authenticated
+  > on different channels.
+- `mobile`
+  > Mobile phone number.
+  >
+  > It is stored encrypted, so like searches are not possible.
+- `name`
+  > Real name or a similar name.
+  >
+  > It is stored encrypted, so like searches are absolutely impossible.
+- `created_at`: The date and time the record was created.
+- `deleted_at`
+  > Date of record deletion.
+  >
+  > This is mainly due to destruction of personal information.
 
 ### `hub_members`
 General member account.
@@ -744,115 +776,115 @@ If there are records such as [hub_sellers](#hub_sellers) or
 a person who also registers and acts as a seller and administrator member.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizenship
-  - `nickname`: nickname.
-  - `password`: Login password.
-  - `profile_background_color`: 
-  - `created_at`: Date and time of membership registration.
-  - `updated_at`: Date and time of member information modification.
-  - `withdrawn_at`: Date and time of membership withdrawal.
+- `id`:
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizenship
+- `nickname`: nickname.
+- `password`: Login password.
+- `profile_background_color`:
+- `created_at`: Date and time of membership registration.
+- `updated_at`: Date and time of member information modification.
+- `withdrawn_at`: Date and time of membership withdrawal.
 
 ### `hub_member_emails`
 Member's email address.
 
 This hub system allows one member to have multiple email accounts.
 
-This is because market participants are corporate entities and there is 
+This is because market participants are corporate entities and there is
 room for them to work as freelancers for multiple companies.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_id`
-    > [hub_channels.id](#hub_channels) of the affiliated channel
-    > 
-    > This is information that can be obtained from [hub_members.channel_id](#hub_members),
-    > but it is being recorded in duplicate to form a unique key constraint.
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `value`: Email address.
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `hub_channel_id`
+  > [hub_channels.id](#hub_channels) of the affiliated channel
+  >
+  > This is information that can be obtained from [hub_members.channel_id](#hub_members),
+  > but it is being recorded in duplicate to form a unique key constraint.
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `value`: Email address.
+- `created_at`: The date and time the record was created.
 
 ### `hub_sellers`
 Seller information.
 
-`hub_sellers` is an entity that literally means a seller, and refers to 
-a person who registers as a [member](#hub_members) in this system, 
-registers [API items](#hub_sales), and conducts [sales](#hub_orders) 
+`hub_sellers` is an entity that literally means a seller, and refers to
+a person who registers as a [member](#hub_members) in this system,
+registers [API items](#hub_sales), and conducts [sales](#hub_orders)
 activities.
 
-Note that `hub_sellers`, unlike [external users](#hub_external_users) 
-or [hub_customers](#hub_customers), where non-member activities are possible, only those 
-who have registered as members can conduct sales activities. And 
+Note that `hub_sellers`, unlike [external users](#hub_external_users)
+or [hub_customers](#hub_customers), where non-member activities are possible, only those
+who have registered as members can conduct sales activities. And
 [real name authentication](#hub_citizens) is also required.
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `created_at`
-    > Seller membership registration date.
-    > 
-    > May be different from membership registration date.
-  - `deleted_at`
-    > Seller membership withdrawal date.
-    > 
-    > It may be different from the membership withdrawal date.
+- `id`:
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `created_at`
+  > Seller membership registration date.
+  >
+  > May be different from membership registration date.
+- `deleted_at`
+  > Seller membership withdrawal date.
+  >
+  > It may be different from the membership withdrawal date.
 
 ### `hub_administrators`
 Administrator.
 
-`hub_administrators` is an entity that literally means administrator, 
-and refers to those who have registered as a [member](#hub_administrators) 
-in this system and perform management activities such as 
+`hub_administrators` is an entity that literally means administrator,
+and refers to those who have registered as a [member](#hub_administrators)
+in this system and perform management activities such as
 [audit](#hub_sale_audits).
 
-Note that `hub_administrators` is different from 
-[external users](#hub_external_users) or [hub_customers](#hub_customers), which can 
-perform non-member activities, and only those who have registered as members 
-can perform management activities. 
+Note that `hub_administrators` is different from
+[external users](#hub_external_users) or [hub_customers](#hub_customers), which can
+perform non-member activities, and only those who have registered as members
+can perform management activities.
 
 In addition, [real name authentication](#hub_citizens) is also required.
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `created_at`
-    > Date of registration as administrator.
-    > 
-    > Different from the date of membership registration.
+- `id`:
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `created_at`
+  > Date of registration as administrator.
+  >
+  > Different from the date of membership registration.
 
 ### `hub_member_elites`
 Elite Member
 
-`hub_member_elites` is an entity that literally means elite member, 
-and refers to those who join this system as a [member](#hub_members) and 
+`hub_member_elites` is an entity that literally means elite member,
+and refers to those who join this system as a [member](#hub_members) and
 perform privileged activities such as the [whitelist](#hub_member_elites).
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_customer_id`: Whitelist grantor's [hub_administrator.id](#hub_administrator)
-  - `reason`: Reason for whitelisting the user.
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_customer_id`: Whitelist grantor's [hub_administrator.id](#hub_administrator)
+- `reason`: Reason for whitelisting the user.
+- `created_at`: The date and time the record was created.
+- `deleted_at`: Date and time of record deletion.
 
 ### `hub_member_villains`
 Villain Member
 
-`hub_member_villains` is an entity that literally means a villain member. 
-It refers to a person who has joined this system as a 
-[member](#hub_members) and has committed misdeeds such as 
+`hub_member_villains` is an entity that literally means a villain member.
+It refers to a person who has joined this system as a
+[member](#hub_members) and has committed misdeeds such as
 [blacklist](#hub_member_villains).
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_customer_id`: [hub_administrator.id](#hub_administrator) of the blacklist grantor
-  - `reason`: Reason for blacklisting the user.
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `hub_member_id`: [hub_members.id](#hub_members) of affiliated members
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_customer_id`: [hub_administrator.id](#hub_administrator) of the blacklist grantor
+- `reason`: Reason for blacklisting the user.
+- `created_at`: The date and time the record was created.
+- `deleted_at`: Date and time of record deletion.
 
 ### `hub_customer_email_verifications`
 Email Verification List
@@ -860,23 +892,23 @@ Email Verification List
 `hub_customer_email_verifications` is entity that manage the email verification list.
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`
-    > [hub_members.id](#hub_members) of affiliated members
-    > 
-    > record the member associated with email verification.
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of affiliate members
-  - `email`: Email.
-  - `code`: verification code.
-  - `type`
-    > verification type.
-    > 
-    > for example. `sign-up`
-  - `verified_at`: The date and time of being verified.
-  - `expired_at`: The date and time of the verification will be expired.
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `hub_member_id`
+  > [hub_members.id](#hub_members) of affiliated members
+  >
+  > record the member associated with email verification.
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of affiliate members
+- `email`: Email.
+- `code`: verification code.
+- `type`
+  > verification type.
+  >
+  > for example. `sign-up`
+- `verified_at`: The date and time of being verified.
+- `expired_at`: The date and time of the verification will be expired.
+- `created_at`: The date and time the record was created.
+- `deleted_at`: Date and time of record deletion.
 
 
 ## Sales
@@ -987,12 +1019,6 @@ erDiagram
   Float fixed
   Float variable
 }
-"hub_sale_snapshot_categories" {
-  String id PK
-  String hub_sale_snapshot_id FK
-  String hub_channel_category_id FK
-  Int sequence
-}
 "hub_sale_snapshots" }|--|| "hub_sales" : sale
 "hub_sale_snapshot_user_prompts" }o--|| "hub_sale_snapshots" : snapshot
 "hub_sale_snapshot_units" }|--|| "hub_sale_snapshots" : snapshot
@@ -1007,59 +1033,58 @@ erDiagram
 "hub_sale_snapshot_unit_stock_choices" }o--|| "hub_sale_snapshot_unit_stocks" : stock
 "hub_sale_snapshot_unit_stock_choices" }o--|| "hub_sale_snapshot_unit_option_candidates" : candidate
 "hub_sale_snapshot_unit_stock_prices" }|--|| "hub_sale_snapshot_unit_stocks" : stock
-"hub_sale_snapshot_categories" }o--|| "hub_sale_snapshots" : snapshot
 ```
 
 ### `hub_sales`
 Seller **sales** products (API).
 
-`hub_sales` is an entity that embodies the "API product sales" (sales) 
+`hub_sales` is an entity that embodies the "API product sales" (sales)
 information registered by [Seller](#hub_sellers).
 
-And the main information of the listing is not recorded in the main 
-`hub_sales`, but in the subordinate [hub_sale_snapshots](#hub_sale_snapshots). When the 
-seller changes the listing that has already been registered, the existing 
-`hub_sales` record is not changed, but a new snapshot record is created. 
+And the main information of the listing is not recorded in the main
+`hub_sales`, but in the subordinate [hub_sale_snapshots](#hub_sale_snapshots). When the
+seller changes the listing that has already been registered, the existing
+`hub_sales` record is not changed, but a new snapshot record is created.
 
-This is to preserve the customer's purchase history at that time without any 
-flaws, even if the seller changes the 
-[stocks](#hub_sale_snapshot_unit_stocks) or price of a specific listing 
-after [customer](#hub_customers) has purchased it. 
+This is to preserve the customer's purchase history at that time without any
+flaws, even if the seller changes the
+[stocks](#hub_sale_snapshot_unit_stocks) or price of a specific listing
+after [customer](#hub_customers) has purchased it.
 
-In addition, it is to support the seller to perform so-called A/B tests, 
+In addition, it is to support the seller to perform so-called A/B tests,
 which measure the performance of each case by changing the stocks or price.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_section_id`: [hub_sections.id](#hub_sections) in the attributed section
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
-  - `hub_seller_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `created_at`: The date and time the record was created.
-  - `opened_at`
-    > Sales start date.
-    > 
-    > If this value is NULL, sales have not started yet.
-  - `closed_at`
-    > The sale ends when.
-    > 
-    > If this value is NULL, the sale will continue forever.
-  - `paused_at`
-    > Suspended.
-    > 
-    > The seller has temporarily suspended API sales for some reason.
-    > 
-    > Customers can still view the listing on the listing and details page,
-    > but the listing will be labeled "This listing is suspended by the seller."
-  - `suspended_at`
-    > Stopped selling.
-    > 
-    > The seller has stopped selling for some reason.
-    > 
-    > Customers cannot view the listing or details page at all.
-    > 
-    > At first glance, it looks similar to a soft delete, but the difference
-    > is that the seller and the manager can still view it and resume selling
-    > at any time.
+- `id`: Primary Key.
+- `hub_section_id`: [hub_sections.id](#hub_sections) in the attributed section
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
+- `hub_seller_id`: Affiliate member's [hub_members.id](#hub_members)
+- `created_at`: The date and time the record was created.
+- `opened_at`
+  > Sales start date.
+  >
+  > If this value is NULL, sales have not started yet.
+- `closed_at`
+  > The sale ends when.
+  >
+  > If this value is NULL, the sale will continue forever.
+- `paused_at`
+  > Suspended.
+  >
+  > The seller has temporarily suspended API sales for some reason.
+  >
+  > Customers can still view the listing on the listing and details page,
+  > but the listing will be labeled "This listing is suspended by the seller."
+- `suspended_at`
+  > Stopped selling.
+  >
+  > The seller has stopped selling for some reason.
+  >
+  > Customers cannot view the listing or details page at all.
+  >
+  > At first glance, it looks similar to a soft delete, but the difference
+  > is that the seller and the manager can still view it and resume selling
+  > at any time.
 
 ### `hub_sale_snapshots`
 Listing snapshot information.
@@ -1075,28 +1100,28 @@ an administrator [reviews](#hub_sale_audits) the listing and adds
 [hub_sale_audit_emendations](#hub_sale_audit_emendations).
 
 **Properties**
-  - `id`: 
-  - `hub_sale_id`: [hub_sales.id](#hub_sales) of the property
-  - `version`
-    > Version name.
-    > 
-    > You can set a different value than `ISwaggerInfo.version`.
-    > 
-    > That is, the version name in the server spec (Swagger document)
-    > and the version name in the product may be different.
-  - `system_prompt`
-    > System prompt.
-    > 
-    > The prompt message that the system will show to the user.
-  - `created_at`: The date and time the record was created.
-  - `activated_at`
-    > Activation time of the snapshot.
-    > 
-    > The time when the audit for this snapshot was approved and first activated.
-    > 
-    > This information can be inferred from [hub_sale_audit_approvals](#hub_sale_audit_approvals),
-    > but is recorded in duplicate for quick record search.
-  - `expired_at`: Expiration point for all APIs within the snapshot.
+- `id`:
+- `hub_sale_id`: [hub_sales.id](#hub_sales) of the property
+- `version`
+  > Version name.
+  >
+  > You can set a different value than `ISwaggerInfo.version`.
+  >
+  > That is, the version name in the server spec (Swagger document)
+  > and the version name in the product may be different.
+- `system_prompt`
+  > System prompt.
+  >
+  > The prompt message that the system will show to the user.
+- `created_at`: The date and time the record was created.
+- `activated_at`
+  > Activation time of the snapshot.
+  >
+  > The time when the audit for this snapshot was approved and first activated.
+  >
+  > This information can be inferred from [hub_sale_audit_approvals](#hub_sale_audit_approvals),
+  > but is recorded in duplicate for quick record search.
+- `expired_at`: Expiration point for all APIs within the snapshot.
 
 ### `hub_sale_snapshot_user_prompts`
 User prompt information for the snapshot.
@@ -1108,10 +1133,10 @@ The user prompt information is a message that the system shows to the user
 when the user enters the listing page. It is a message that the seller
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of the attributed snapshot
-  - `icon_url`: The icon URL to be displayed.
-  - `sequence`: Sequence.
+- `id`:
+- `hub_sale_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of the attributed snapshot
+- `icon_url`: The icon URL to be displayed.
+- `sequence`: Sequence.
 
 ### `hub_sale_snapshot_units`
 Product composition information handled by the listing.
@@ -1147,23 +1172,23 @@ For example, even if you buy a laptop, the final stocks are determined
 only after selecting all of the options (CPU / RAM / SSD) in it.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attributed snapshot
-  - `parent_id`
-    > [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the parent unit
-    > 
-    > Customers who purchased the parent unit can continue to use the API
-    > of the current unit.
-  - `name`: The representative name of the unit.
-  - `primary`
-    > Whether primary/secondary.
-    > 
-    > Simple notation attribute.
-  - `required`
-    > Required or not.
-    > 
-    > For required units, you cannot purchase them without excluding them.
-  - `sequence`: The order of placement within the attributed snapshots.
+- `id`:
+- `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attributed snapshot
+- `parent_id`
+  > [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the parent unit
+  >
+  > Customers who purchased the parent unit can continue to use the API
+  > of the current unit.
+- `name`: The representative name of the unit.
+- `primary`
+  > Whether primary/secondary.
+  >
+  > Simple notation attribute.
+- `required`
+  > Required or not.
+  >
+  > For required units, you cannot purchase them without excluding them.
+- `sequence`: The order of placement within the attributed snapshots.
 
 ### `hub_sale_snapshot_unit_contents`
 Unit multilingual content information in the listing snapshot.
@@ -1172,11 +1197,11 @@ Unit multilingual content information in the listing snapshot.
 multilingual content information of the unit in the listing snapshot.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units](#hub_sale_snapshot_units) of the attributed unit
-  - `name`: The content of the unit.
-  - `original`: Whether it's original swagger or not.
-  - `lang_code`: language code.
+- `id`:
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units](#hub_sale_snapshot_units) of the attributed unit
+- `name`: The content of the unit.
+- `original`: Whether it's original swagger or not.
+- `lang_code`: language code.
 
 ### `hub_sale_snapshot_unit_icons`
 Unit icon information in the listing snapshot.
@@ -1185,28 +1210,28 @@ Unit icon information in the listing snapshot.
 information of the unit in the listing snapshot.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_id`: 
-  - `url`: 
+- `id`:
+- `hub_sale_snapshot_unit_id`:
+- `url`:
 
 ### `hub_sale_snapshot_unit_swaggers`
 Swagger information for API units in the listing snapshot.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the affiliated unit
-  - `host_real`: The actual server address.
-  - `host_dev`: Test server address.
+- `id`:
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the affiliated unit
+- `host_real`: The actual server address.
+- `host_dev`: Test server address.
 
 ### `hub_sale_snapshot_unit_swagger_translates`
 Swagger information for API units in the listing snapshot.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_swagger_id`: [hub_sale_snapshot_unit_swaggers.id](#hub_sale_snapshot_unit_swaggers)
-  - `original`: Whether it's original swagger or not.
-  - `url`: Swagger's S3 URL.
-  - `lang_code`: Swagger language code.
+- `id`:
+- `hub_sale_snapshot_unit_swagger_id`: [hub_sale_snapshot_unit_swaggers.id](#hub_sale_snapshot_unit_swaggers)
+- `original`: Whether it's original swagger or not.
+- `url`: Swagger's S3 URL.
+- `lang_code`: Swagger language code.
 
 ### `hub_sale_snapshot_unit_parameters`
 Parameter information for the listing unit.
@@ -1214,22 +1239,22 @@ Parameter information for the listing unit.
 Definition of additional parameters to be sent to the seller server.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
-  - `in`
-    > Type of parameter.
-    > 
-    > Currently, this system supports two types of parameters.
-    > 
-    > - query
-    > - header
-  - `key`: Key value, i.e. variable name.
-  - `value`: Value, i.e. variable value.
-  - `description`: 
-  - `sequence`: 
-  - `created_at`: 
-  - `updated_at`: 
-  - `deleted_at`: 
+- `id`:
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
+- `in`
+  > Type of parameter.
+  >
+  > Currently, this system supports two types of parameters.
+  >
+  > - query
+  > - header
+- `key`: Key value, i.e. variable name.
+- `value`: Value, i.e. variable value.
+- `description`:
+- `sequence`:
+- `created_at`:
+- `updated_at`:
+- `deleted_at`:
 
 ### `hub_sale_snapshot_unit_options`
 Individual option information in the listing unit.
@@ -1259,22 +1284,22 @@ no matter what value is entered and selected, this option in this case does not
 affect the final stock.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
-  - `name`: The name of the option.
-  - `type`
-    > Type of option.
-    > 
-    > - select: How to select one of the candidate items
-    > - boolean
-    > - number
-    > - string
-  - `variable`
-    > Whether it is variable.
-    > 
-    > Whether selecting a different candidate value when the current option
-    > type is "select" will change the final stock.
-  - `sequence`: Deployment order within the unit.
+- `id`:
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
+- `name`: The name of the option.
+- `type`
+  > Type of option.
+  >
+  > - select: How to select one of the candidate items
+  > - boolean
+  > - number
+  > - string
+- `variable`
+  > Whether it is variable.
+  >
+  > Whether selecting a different candidate value when the current option
+  > type is "select" will change the final stock.
+- `sequence`: Deployment order within the unit.
 
 ### `hub_sale_snapshot_unit_option_candidates`
 Candidate values that can be selected in the option.
@@ -1292,10 +1317,10 @@ However, if the type of the attribution option is not "select", this entity
 is not needed.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_option_id`: [hub_sale_snapshot_unit_options.id](#hub_sale_snapshot_unit_options) of the attribution option
-  - `name`: Representative name of the candidate value.
-  - `sequence`: The order of placement within the Attribution Options.
+- `id`:
+- `hub_sale_snapshot_unit_option_id`: [hub_sale_snapshot_unit_options.id](#hub_sale_snapshot_unit_options) of the attribution option
+- `name`: Representative name of the candidate value.
+- `sequence`: The order of placement within the Attribution Options.
 
 ### `hub_sale_snapshot_unit_stocks`
 Final stock information in the listing unit.
@@ -1324,10 +1349,10 @@ in the unit. Of course, if there is not a single variable "select" type option,
 the final number of stocks in the unit is only 1.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
-  - `name`: The name of the final stock.
-  - `sequence`: Deployment order within the unit.
+- `id`:
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
+- `name`: The name of the final stock.
+- `sequence`: Deployment order within the unit.
 
 ### `hub_sale_snapshot_unit_stock_choices`
 Final stock selection information.
@@ -1340,10 +1365,10 @@ Of course, if the attributable [unit](#hub_sale_snapshot_units) does not have an
 this entity can also be ignored.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_stock_id`: [hub_sale_snapshot_unit_stocks.id](#hub_sale_snapshot_unit_stocks) of the stock
-  - `hub_sale_snapshot_unit_option_candidate_id`: [hub_sale_snapshot_unit_option_candidates.id](#hub_sale_snapshot_unit_option_candidates)
-  - `sequence`: The order of placement within the assigned stock.
+- `id`:
+- `hub_sale_snapshot_unit_stock_id`: [hub_sale_snapshot_unit_stocks.id](#hub_sale_snapshot_unit_stocks) of the stock
+- `hub_sale_snapshot_unit_option_candidate_id`: [hub_sale_snapshot_unit_option_candidates.id](#hub_sale_snapshot_unit_option_candidates)
+- `sequence`: The order of placement within the assigned stock.
 
 ### `hub_sale_snapshot_unit_stock_prices`
 Stock price information.
@@ -1361,32 +1386,14 @@ the examples below.
 3. Fixed cost 150,000 won, free up to 4,000 APIs, 50 won per excess
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_unit_stock_id`: [hub_sale_snapshot_unit_stocks](#hub_sale_snapshot_unit_stocks) of the attributable stock
-  - `threshold`: Free quantity within a fixed amount.
-  - `fixed`: Fixed amount.
-  - `variable`
-    > Variable amount.
-    > 
-    > Cost per API usage exceeding the limit quantity.
-
-### `hub_sale_snapshot_categories`
-Category classification info of sale snapshot.
-
-`hub_sale_snapshot_categories` is an entity that expresses 
-which [category](#hub_channel_categories) the listing 
-[snapshot](#hub_sale_snapshots).
-
-It is designed to resolve the M:N relationship between 
-[hub_sale_snapshots](#hub_sale_snapshots) and [hub_channel_categories](#hub_channel_categories), 
-respectively. Of course, if the target category being referred to is a 
-major category, all minor categories belonging to it can also be used.
-
-**Properties**
-  - `id`: Primary Key.
-  - `hub_sale_snapshot_id`: Belonged snapshot's [hub_sale_snapshots.id](#hub_sale_snapshots)
-  - `hub_channel_category_id`: Belonged category's [hub_channel_categories.id](#hub_channel_categories)
-  - `sequence`: Sequence order in belonged snapshot.
+- `id`:
+- `hub_sale_snapshot_unit_stock_id`: [hub_sale_snapshot_unit_stocks](#hub_sale_snapshot_unit_stocks) of the attributable stock
+- `threshold`: Free quantity within a fixed amount.
+- `fixed`: Fixed amount.
+- `variable`
+  > Variable amount.
+  >
+  > Cost per API usage exceeding the limit quantity.
 
 
 ## SaleContents
@@ -1427,6 +1434,18 @@ erDiagram
   String value
   Int sequence
 }
+"hub_sale_snapshot_channels" {
+  String id PK
+  String hub_sale_snapshot_id FK
+  String hub_channel_id FK
+  Int sequence
+}
+"hub_sale_snapshot_channel_categories" {
+  String id PK
+  String hub_sale_snapshot_channel_id FK
+  String hub_channel_category_id FK
+  Int sequence
+}
 "hub_sale_replicas" {
   String id PK
   String hub_sale_id FK
@@ -1436,6 +1455,7 @@ erDiagram
   String id PK
   String code UK
   String name UK
+  Boolean exclusive
   DateTime created_at
   DateTime updated_at
   DateTime deleted_at "nullable"
@@ -1482,6 +1502,10 @@ erDiagram
 "hub_sale_snapshot_content_icons" }o--|| "hub_sale_snapshot_contents" : content
 "hub_sale_snapshot_content_files" }o--|| "hub_sale_snapshot_contents" : content
 "hub_sale_snapshot_content_tags" }o--|| "hub_sale_snapshot_contents" : content
+"hub_sale_snapshot_channels" }o--|| "hub_sale_snapshots" : snapshot
+"hub_sale_snapshot_channels" }o--|| "hub_channels" : channel
+"hub_sale_snapshot_channel_categories" }o--|| "hub_sale_snapshot_channels" : to_channel
+"hub_sale_snapshot_channel_categories" }o--|| "hub_channel_categories" : category
 "hub_sale_replicas" |o--|| "hub_sales" : sale
 "hub_sale_replicas" }o--|| "hub_sale_snapshots" : snapshot
 "hub_channel_categories" }o--|| "hub_channels" : channel
@@ -1513,39 +1537,39 @@ and every icons and files in each language content are the same, just copy
 and paste their URL addresses.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attributed snapshot
-  - `lang_code`: Language code
-  - `original`: Whether its language is the original language.
-  - `title`: title.
-  - `summary`: Summary Description
-  - `format`
-    > The format of the body, almost the extension.
-    > 
-    > Use txt or html or md.
-  - `body`: Body content.
-  - `version_description`
-    > Version Description.
-    > 
-    > You can record information about the version description.
+- `id`: Primary Key.
+- `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attributed snapshot
+- `lang_code`: Language code
+- `original`: Whether its language is the original language.
+- `title`: title.
+- `summary`: Summary Description
+- `format`
+  > The format of the body, almost the extension.
+  >
+  > Use txt or html or md.
+- `body`: Body content.
+- `version_description`
+  > Version Description.
+  >
+  > You can record information about the version description.
 
 ### `hub_sale_snapshot_content_thumbnails`
 Thumbnail image of the listing snapshot content.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents)
-  - `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
-  - `sequence`: Batch order.
+- `id`:
+- `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents)
+- `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
+- `sequence`: Batch order.
 
 ### `hub_sale_snapshot_content_icons`
 Representative image of the listing snapshot content.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents)
-  - `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
-  - `sequence`: Batch order.
+- `id`:
+- `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents)
+- `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
+- `sequence`: Batch order.
 
 ### `hub_sale_snapshot_content_files`
 Attachments to the listing snapshot content.
@@ -1554,10 +1578,10 @@ Attachments to the listing snapshot content.
 to the posting snapshot content.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents)
-  - `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
-  - `sequence`: Batch order.
+- `id`:
+- `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents)
+- `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
+- `sequence`: Batch order.
 
 ### `hub_sale_snapshot_content_tags`
 Search tags for the listing snapshot content.
@@ -1566,18 +1590,50 @@ Search tags for the listing snapshot content.
 for the listing snapshot content.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents) of the attributed content.
-  - `value`: Search tag value.
-  - `sequence`: Batch order.
+- `id`:
+- `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents) of the attributed content.
+- `value`: Search tag value.
+- `sequence`: Batch order.
+
+### `hub_sale_snapshot_channels`
+Sales channel information for the listing snapshot.
+
+`hub_sale_snapshot_channels` is an entity that represents which
+[listing snapshot](#hub_sale_snapshots) is sold on which
+[channels](#hub_channels), and is designed to resolve the M:N relationship
+between the two tables.
+
+**Properties**
+- `id`:
+- `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attributed listing snapshots.
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel.
+- `sequence`: Batch order.
+
+### `hub_sale_snapshot_channel_categories`
+Channel category classification information of the listing snapshot.
+
+`hub_sale_snapshot_channel_categories` is an entity that represents which
+[listing snapshot](#hub_sale_snapshots) is classified into which
+[category](#hub_channel_categories) in each sales [channel](#hub_channels).
+
+It is designed to resolve the M: N relationship between [hub_sale_snapshots](#hub_sale_snapshots)
+and [hub_channel_categories](#hub_channel_categories). Of course, if the target category being
+referenced is a major category, all of the subcategories belonging to it are
+also available.
+
+**Properties**
+- `id`:
+- `hub_sale_snapshot_channel_id`: [hub_sale_snapshot_channels.id](#hub_sale_snapshot_channels) of the assigned listing snapshot channel
+- `hub_channel_category_id`: [hub_channel_categories.id](#hub_channel_categories) of the category of affiliation
+- `sequence`: Batch order.
 
 ### `hub_sale_replicas`
 Duplicate history of the listing.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_id`: [hub_sales.id](#hub_sales) of the newly created listing by duplicating it
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots)
+- `id`:
+- `hub_sale_id`: [hub_sales.id](#hub_sales) of the newly created listing by duplicating it
+- `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots)
 
 
 ## Audits
@@ -1674,163 +1730,163 @@ erDiagram
 ### `hub_sale_audits`
 Audit information for listing snapshots.
 
-Whenever [sellers](#hub_sellers) register and modify listings 
+Whenever [sellers](#hub_sellers) register and modify listings
 (whenever a new listing [snapshot](#hub_sale_snapshots) record is created),
-it requires an audit by [administrators](#hub_administrators), and if 
-it fails, the sale itself is impossible. `hub_sale_audits` is an entity 
+it requires an audit by [administrators](#hub_administrators), and if
+it fails, the sale itself is impossible. `hub_sale_audits` is an entity
 that visualizes the audit of listing snapshots.
 
-And the administrator can write the audit matters as a kind of 
-[article](#bbs_articles), and the seller and the administrator can 
+And the administrator can write the audit matters as a kind of
+[article](#bbs_articles), and the seller and the administrator can
 continuously communicate through comments about the audit process or its results.
-Therefore, this `hub_sale_audits` was designed as a subtype entity of 
+Therefore, this `hub_sale_audits` was designed as a subtype entity of
 [bbs_articles](#bbs_articles).
 
-In addition, this audit article records all the modifications whenever 
-the administrator modifies it, so that both the seller and the administrator 
-can view it. Due to the nature of electronic commerce where money is involved, 
-the potential for disputes is always prevalent, and administrators are no 
-exception. This is to prevent administrators from manipulating the situation by 
+In addition, this audit article records all the modifications whenever
+the administrator modifies it, so that both the seller and the administrator
+can view it. Due to the nature of electronic commerce where money is involved,
+the potential for disputes is always prevalent, and administrators are no
+exception. This is to prevent administrators from manipulating the situation by
 changing their claims and editing articles in the event of a dispute.
 
-In addition, it is possible for administrators to reject a review and then 
-reverse it and approve it, but it is impossible to reverse and reject an already 
-approved review. This is because the sale of the item has already begun the 
+In addition, it is possible for administrators to reject a review and then
+reverse it and approve it, but it is impossible to reverse and reject an already
+approved review. This is because the sale of the item has already begun the
 moment the review is approved.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attached listing snapshots
-  - `hub_customer_id`: [hub_customers.id](#hub_customers)
-  - `hub_administrator_id`: Affiliate member's [hub_members.id](#hub_members)
+- `id`:
+- `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attached listing snapshots
+- `hub_customer_id`: [hub_customers.id](#hub_customers)
+- `hub_administrator_id`: Affiliate member's [hub_members.id](#hub_members)
 
 ### `hub_sale_audit_emendations`
 Information on the revision of listings.
 
-This exchange requires [listings](#hub_sales) registered or modified by 
-[hub_sellers](#hub_sellers) to be reviewed by [hub_sale_administrators](#hub_sale_administrators). 
-During the review, the administrator and the seller can exchange 
+This exchange requires [listings](#hub_sales) registered or modified by
+[hub_sellers](#hub_sellers) to be reviewed by [hub_sale_administrators](#hub_sale_administrators).
+During the review, the administrator and the seller can exchange
 [comments](#hub_sale_audit_comments) and revise and modify the listing.
 
-This entity `hub_sale_audit_emendations` is an entity that embodies 
-these revisions, and has information on which [snapshot](#hub_sale_snapshots) 
+This entity `hub_sale_audit_emendations` is an entity that embodies
+these revisions, and has information on which [snapshot](#hub_sale_snapshots)
 the administrator or seller revised, and what the newly created snapshot is.
 
-The revision target does not necessarily have to be the most recent snapshot, 
-and in some cases, it is possible to roll back or branch by revising a previous 
-snapshot. Of course, the snapshot to be revised must be related to the current 
-audit, and revisions cannot be made at all for snapshots that have passed 
+The revision target does not necessarily have to be the most recent snapshot,
+and in some cases, it is possible to roll back or branch by revising a previous
+snapshot. Of course, the snapshot to be revised must be related to the current
+audit, and revisions cannot be made at all for snapshots that have passed
 the previous audit.
 
-In addition, revisions are only possible during the audit process, and once 
-the audit is [approved](#hub_sale_audit_approvals), no further revisions 
-are possible. However, if the administrator rejects the audit 
-[hub_sale_audit_rejections](#hub_sale_audit_rejections), the seller can make revisions and supplements 
+In addition, revisions are only possible during the audit process, and once
+the audit is [approved](#hub_sale_audit_approvals), no further revisions
+are possible. However, if the administrator rejects the audit
+[hub_sale_audit_rejections](#hub_sale_audit_rejections), the seller can make revisions and supplements
 on his own and request a re-review from the administrator.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_audit_id`: [hub_sale_audits.id](#hub_sale_audits)
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who performed the correction.
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `previous_hub_sale_snapshot_id`
-    > [hub_sale_snapshots.id](#hub_sale_snapshots) of the listing snapshot before revision.
-    > 
-    > The revision target snapshot does not necessarily have to be the snapshot 
-    > at the time of the review start. It is possible to make additional revisions 
-    > to the results of another revision, and it is also possible to go back to 
-    > a previous revision and make revisions again.
-  - `after_hub_sale_snapshot_id`
-    > Snapshot of the revised results [hub_sale_snapshots.id](#hub_sale_snapshots).
-    > 
-    > A new snapshot created as a result of the revision by the seller or administrator.
-  - `actor_type`
-    > Types of customers who have made corrections
-    > 
-    > - administrator: administrator
-    > - seller: seller
-  - `description`
-    > Additional description for revisions.
-    > 
-    > When there is something to explain separately about this revision.
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `hub_sale_audit_id`: [hub_sale_audits.id](#hub_sale_audits)
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who performed the correction.
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `previous_hub_sale_snapshot_id`
+  > [hub_sale_snapshots.id](#hub_sale_snapshots) of the listing snapshot before revision.
+  >
+  > The revision target snapshot does not necessarily have to be the snapshot
+  > at the time of the review start. It is possible to make additional revisions
+  > to the results of another revision, and it is also possible to go back to
+  > a previous revision and make revisions again.
+- `after_hub_sale_snapshot_id`
+  > Snapshot of the revised results [hub_sale_snapshots.id](#hub_sale_snapshots).
+  >
+  > A new snapshot created as a result of the revision by the seller or administrator.
+- `actor_type`
+  > Types of customers who have made corrections
+  >
+  > - administrator: administrator
+  > - seller: seller
+- `description`
+  > Additional description for revisions.
+  >
+  > When there is something to explain separately about this revision.
+- `created_at`: The date and time the record was created.
 
 ### `hub_sale_audit_rejections`
 Rejection of listing snapshot review.
 
-`hub_sale_auditsRejection` is an entity that represents the history of 
+`hub_sale_auditsRejection` is an entity that represents the history of
 rejection of [hub_administrators](#hub_administrators) for [listing review](#hub_sale_audits).
 
-Note that the administrator who [initiated](#hub_sale_audits) listing 
-snapshot review and the administrator who processes the rejection can be 
-different people. Also, if [hub_sellers](#hub_sellers) requests a re-review with 
+Note that the administrator who [initiated](#hub_sale_audits) listing
+snapshot review and the administrator who processes the rejection can be
+different people. Also, if [hub_sellers](#hub_sellers) requests a re-review with
 [comments](#hub_sale_audit_comments), the administrator can repeatedly
 process the rejection.
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `hub_sale_audit_id`: [hub_sale_audits.id](#hub_sale_audits) of the attribution audit.
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the rejected admin customer.
-  - `reversible`
-    > Whether or not to reverse.
-    > 
-    > Whether to confirm the current rejection and not to reverse it.
-    > 
-    > However, this is only an expression of intent to the judge that the current 
-    > rejection is confirmed and that there will be no future reversal and approval. 
-    > In reality, it is possible to express intent in this way and then later 
-    > reverse and approve it.
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `hub_sale_audit_id`: [hub_sale_audits.id](#hub_sale_audits) of the attribution audit.
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the rejected admin customer.
+- `reversible`
+  > Whether or not to reverse.
+  >
+  > Whether to confirm the current rejection and not to reverse it.
+  >
+  > However, this is only an expression of intent to the judge that the current
+  > rejection is confirmed and that there will be no future reversal and approval.
+  > In reality, it is possible to express intent in this way and then later
+  > reverse and approve it.
+- `created_at`: The date and time the record was created.
 
 ### `hub_sale_audit_approvals`
 Approval for listing snapshot audit.
 
-`hub_sale_audit_approvals` is an entity that embodies the action of 
-[administrators](#hub_administrators) approving 
+`hub_sale_audit_approvals` is an entity that embodies the action of
+[administrators](#hub_administrators) approving
 [listing audit](#hub_sale_audits).
 
-Note that the administrator who initiated the listing snapshot audit and the 
-administrator who processes the approval can be different people. Also, it is 
-possible to reject an audit and then reverse and approve it. However, it is 
-impossible to reverse and reverse an audit that has already been approved. 
-This is because when it is approved, [listing](#hub_sales) is actually 
+Note that the administrator who initiated the listing snapshot audit and the
+administrator who processes the approval can be different people. Also, it is
+possible to reject an audit and then reverse and approve it. However, it is
+impossible to reverse and reverse an audit that has already been approved.
+This is because when it is approved, [listing](#hub_sales) is actually
 put on sale.
 
 **Properties**
-  - `id`: 
-  - `hub_administrator_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `hub_sale_audit_id`: [hub_sale_audits.id](#hub_sale_audits) of the attribution audit.
-  - `hub_sale_snapshot_id`
-    > [hub_sale_snapshots.id](#hub_sale_snapshots) of the snapshots to be approved for audit.
-    > 
-    > When approving an audit, it is not necessary to approve only the last [annotations](#hub_sale_audit_emendations). In some cases, the original snapshot or a previous annotation can be approved and [activated](#hub_sale_snapshots).
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the approved admin customer.
-  - `fee_ratio`: 수수료율.
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `hub_administrator_id`: Affiliate member's [hub_members.id](#hub_members)
+- `hub_sale_audit_id`: [hub_sale_audits.id](#hub_sale_audits) of the attribution audit.
+- `hub_sale_snapshot_id`
+  > [hub_sale_snapshots.id](#hub_sale_snapshots) of the snapshots to be approved for audit.
+  >
+  > When approving an audit, it is not necessary to approve only the last [annotations](#hub_sale_audit_emendations). In some cases, the original snapshot or a previous annotation can be approved and [activated](#hub_sale_snapshots).
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the approved admin customer.
+- `fee_ratio`: 수수료율.
+- `created_at`: The date and time the record was created.
 
 ### `hub_sale_audit_comments`
 Comments written on the review article.
 
-`hub_sale_audit_comments` is a subtype entity of [bbs_article_comments](#bbs_article_comments), 
-and is used when the administrator and [sellers](#hub_sellers) communicate 
-with each other regarding the [review](#hub_sale_audits) initiated by 
+`hub_sale_audit_comments` is a subtype entity of [bbs_article_comments](#bbs_article_comments),
+and is used when the administrator and [sellers](#hub_sellers) communicate
+with each other regarding the [review](#hub_sale_audits) initiated by
 [administrators](#hub_administrators).
 
-This also applies after the review is completed, and even for a review that 
-has been rejected once, the seller can request a re-review by leaving a comment. 
-Of course, most sellers will follow the administrator's guide before requesting 
+This also applies after the review is completed, and even for a review that
+has been rejected once, the seller can request a re-review by leaving a comment.
+Of course, most sellers will follow the administrator's guide before requesting
 a re-review and do their own editing.
 
 **Properties**
-  - `id`: 
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who wrote the comment.
-  - `actor_type`
-    > The type of customer who wrote the comment.
-    > 
-    > - administrator: administrator
-    > - seller: seller
+- `id`:
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who wrote the comment.
+- `actor_type`
+  > The type of customer who wrote the comment.
+  >
+  > - administrator: administrator
+  > - seller: seller
 
 
 ## Inquiries
@@ -1923,119 +1979,119 @@ erDiagram
 ### `hub_sale_snapshot_inquiries`
 Inquiry about listing snapshots.
 
-`hub_sale_snapshot_inquiries` is a subtype entity of [bbs_articles](#bbs_articles), 
-and it embodies the inquiry written by [customers](#hub_customers) 
-about listings registered by [sellers](#hub_sellers) 
+`hub_sale_snapshot_inquiries` is a subtype entity of [bbs_articles](#bbs_articles),
+and it embodies the inquiry written by [customers](#hub_customers)
+about listings registered by [sellers](#hub_sellers)
 (only in units of [snapshots](#hub_sale_snapshots) for accurate tracking).
 
-In addition, since customers are waiting for the seller's response after writing 
-an inquiry, it provides a reference for whether the seller has read the inquiry 
-written by the customer. Of course, since the inquiry itself is a subtype of 
-an article, it is also possible for sellers to communicate with each other as 
+In addition, since customers are waiting for the seller's response after writing
+an inquiry, it provides a reference for whether the seller has read the inquiry
+written by the customer. Of course, since the inquiry itself is a subtype of
+an article, it is also possible for sellers to communicate with each other as
 [comments](#hub_sale_snapshot_inquiry_comments) before an official response.
 
-However, comments themselves are only possible for customers, even if they 
-are not the ones who wrote the article. Of course, sellers cannot write if they 
+However, comments themselves are only possible for customers, even if they
+are not the ones who wrote the article. Of course, sellers cannot write if they
 are not the ones who wrote the inquiry.
 
 **Properties**
-  - `id`: PK + FK.
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of the belonging listing snapshots
-  - `hub_customer_id`: Customer writing the query [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `type`
-    > The type of the question article.
-    > 
-    > - `question`: question
-    > - `review`: review
-  - `read_by_seller_at`: The date and time the seller first viewed the inquiry.
+- `id`: PK + FK.
+- `hub_sale_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of the belonging listing snapshots
+- `hub_customer_id`: Customer writing the query [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `type`
+  > The type of the question article.
+  >
+  > - `question`: question
+  > - `review`: review
+- `read_by_seller_at`: The date and time the seller first viewed the inquiry.
 
 ### `hub_sale_snapshot_questions`
 Questions about listing snapshots.
 
-`hub_sale_snapshot_questions` is a subtype entity of 
-[hub_sale_snapshot_inquiries](#hub_sale_snapshot_inquiries), and is used when a 
-[customer](#hub_customers) wants to ask something about a listing 
-(the [snapshot at that time](#hub_salesnapshots)) registered by a 
+`hub_sale_snapshot_questions` is a subtype entity of
+[hub_sale_snapshot_inquiries](#hub_sale_snapshot_inquiries), and is used when a
+[customer](#hub_customers) wants to ask something about a listing
+(the [snapshot at that time](#hub_salesnapshots)) registered by a
 [seller](#hub_sellers).
 
 And like most exchanges, `hub_sale_snapshot_questions` also provides a `secret`
-attribute, which allows you to write a "secret message" that can only be viewed 
+attribute, which allows you to write a "secret message" that can only be viewed
 by the customer who wrote the question and the seller.
 
 **Properties**
-  - `id`: PK + FK.
-  - `secret`: Whether it is a secret or not.
+- `id`: PK + FK.
+- `secret`: Whether it is a secret or not.
 
 ### `hub_sale_snapshot_reviews`
 Reviews for the listing snapshot.
 
-`hub_sale_snapshot_reviews` is a subtype entity of 
-[hub_sale_snapshot_inquiries](#hub_sale_snapshot_inquiries), and is used when 
-[customers](#hub_customers) purchase a listing 
-([snapshot at that time](#hub_sale_snapshots)) registered by 
-[sellers](#hub_sellers) as a [product](#hub_order_goods) and want to 
+`hub_sale_snapshot_reviews` is a subtype entity of
+[hub_sale_snapshot_inquiries](#hub_sale_snapshot_inquiries), and is used when
+[customers](#hub_customers) purchase a listing
+([snapshot at that time](#hub_sale_snapshots)) registered by
+[sellers](#hub_sellers) as a [product](#hub_order_goods) and want to
 leave a review and evaluation for it.
 
-Note that `hub_sale_snapshot_reviews` and [hub_order_goods](#hub_order_goods) are in 
-a logarithmic relationship of N: 1, but that does not mean that customers 
-can continue to write reviews for the same product indefinitely. Perhaps 
-there is a restriction that if they write a review once, they can write 
+Note that `hub_sale_snapshot_reviews` and [hub_order_goods](#hub_order_goods) are in
+a logarithmic relationship of N: 1, but that does not mean that customers
+can continue to write reviews for the same product indefinitely. Perhaps
+there is a restriction that if they write a review once, they can write
 an additional review after a month?
 
 **Properties**
-  - `id`: PK + FK.
-  - `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods)
+- `id`: PK + FK.
+- `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods)
 
 ### `hub_sale_snapshot_review_snapshots`
 Content snapshot of reviews for a listing snapshot.
 
-`hub_sale_snapshot_review_snapshots` is a subtype entity of 
-[bbs_article_snapshots](#bbs_article_snapshots), designed to add a "review score" item to the 
+`hub_sale_snapshot_review_snapshots` is a subtype entity of
+[bbs_article_snapshots](#bbs_article_snapshots), designed to add a "review score" item to the
 content of [review articles](#hub_sale_snapshot_reviews).
 
-That is, after a customer writes a review article, he or she can edit it and 
+That is, after a customer writes a review article, he or she can edit it and
 change the review score at any time.
 
 **Properties**
-  - `id`: PK + FK.
-  - `score`: Evaluation score.
+- `id`: PK + FK.
+- `score`: Evaluation score.
 
 ### `hub_sale_snapshot_inquiry_answers`
 Answers to inquiries in the listing snapshot.
 
-`hub_sale_snapshot_inquiry_answers` is an entity that embodies the official 
-answers written by [sellers](#hub_sellers) to the 
-[inquiries](#hub_sale_snapshot_inquiries) written by 
+`hub_sale_snapshot_inquiry_answers` is an entity that embodies the official
+answers written by [sellers](#hub_sellers) to the
+[inquiries](#hub_sale_snapshot_inquiries) written by
 [customers](#hub_customers).
 
-Of course, in addition to the sellers writing official answers like this, 
-they can also communicate with the inquirer and other customers through 
+Of course, in addition to the sellers writing official answers like this,
+they can also communicate with the inquirer and other customers through
 [comments](#bbs_article_comments) in the attributed inquiries.
 
 > Comments on answers are not allowed. Encourage them to write comments on inquiries.
 
 **Properties**
-  - `id`: PK + FK
-  - `hub_sale_snapshot_inquiry_id`: Inquiry for Attribution [hub_sale_snapshot_inquiries.id](#hub_sale_snapshot_inquiries)
-  - `hub_customer_id`: Answer author Customer [hub_customers.id](#hub_customers)
-  - `hub_seller_id`: Affiliate member's [hub_members.id](#hub_members)
+- `id`: PK + FK
+- `hub_sale_snapshot_inquiry_id`: Inquiry for Attribution [hub_sale_snapshot_inquiries.id](#hub_sale_snapshot_inquiries)
+- `hub_customer_id`: Answer author Customer [hub_customers.id](#hub_customers)
+- `hub_seller_id`: Affiliate member's [hub_members.id](#hub_members)
 
 ### `hub_sale_snapshot_inquiry_comments`
 Comments on the inquiry.
 
-Comments on the inquiry can be freely written by anyone, even if they are not 
+Comments on the inquiry can be freely written by anyone, even if they are not
 the parties involved.
 
 **Properties**
-  - `id`: PK + FK
-  - `hub_customer_id`: Commenter Customer [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `actor_type`
-    > Type of commenter
-    > 
-    > - customer: customer
-    > - seller: seller
+- `id`: PK + FK
+- `hub_customer_id`: Commenter Customer [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `actor_type`
+  > Type of commenter
+  >
+  > - customer: customer
+  > - seller: seller
 
 ### `hub_sale_snapshot_inquiry_likes`
 Like the inquiry.
@@ -2043,11 +2099,11 @@ Like the inquiry.
 You can freely write a like for the inquiry, even if you are not a party to it.
 
 **Properties**
-  - `id`: PK + FK
-  - `hub_sale_snapshot_inquiry_id`: Liked Inquiry [hub_sale_snapshot_inquiries.id](#hub_sale_snapshot_inquiries)
-  - `hub_customer_id`: Customers who liked [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `created_at`: The date and time the record was created.
+- `id`: PK + FK
+- `hub_sale_snapshot_inquiry_id`: Liked Inquiry [hub_sale_snapshot_inquiries.id](#hub_sale_snapshot_inquiries)
+- `hub_customer_id`: Customers who liked [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `created_at`: The date and time the record was created.
 
 
 ## Orders
@@ -2178,23 +2234,23 @@ erDiagram
 ### `hub_carts`
 Shopping cart.
 
-The shopping cart `hub_carts` is literally a space where 
-[customers](#hub_customers) temporarily store products before purchasing 
+The shopping cart `hub_carts` is literally a space where
+[customers](#hub_customers) temporarily store products before purchasing
 them [hub_orders](#hub_orders).
 
-However, `hub_carts` here does not necessarily mean that the target of 
-putting products in the shopping cart is consumers. [sellers](#hub_sellers) 
-and [administrators](#hub_administrators) can also configure their own 
+However, `hub_carts` here does not necessarily mean that the target of
+putting products in the shopping cart is consumers. [sellers](#hub_sellers)
+and [administrators](#hub_administrators) can also configure their own
 shopping carts, but the purpose is not to purchase products themselves,
 but to pre-configure shopping cart templates to be provided to customers.
 
 **Properties**
-  - `id`: 
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the cart creator customer
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `actor_type`: Type of shopping cart constructor.
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the cart creator customer
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `actor_type`: Type of shopping cart constructor.
+- `created_at`: The date and time the record was created.
+- `deleted_at`: Date and time of record deletion.
 
 ### `hub_cart_commodities`
 Products (raw materials) in the cart.
@@ -2214,21 +2270,21 @@ Information about these units and stocks is recorded in the sub-entity
 [hub_cart_commodity_stocks](#hub_cart_commodity_stocks).
 
 **Properties**
-  - `id`: 
-  - `hub_cart_id`: [hub_carts.id](#hub_carts) of your cart
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of target listing snapshots
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`: Date and time of record deletion.
-  - `published`
-    > Whether published.
-    > 
-    > Ordered and paid for with current cart items.
-    > 
-    > Until order completion, cart items can be recycled to continue creating
-    > new order request records.
-    > 
-    > As part of reverse normalization, this is actually a computable attribute,
-    > but only for performance.
+- `id`:
+- `hub_cart_id`: [hub_carts.id](#hub_carts) of your cart
+- `hub_sale_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of target listing snapshots
+- `created_at`: The date and time the record was created.
+- `deleted_at`: Date and time of record deletion.
+- `published`
+  > Whether published.
+  >
+  > Ordered and paid for with current cart items.
+  >
+  > Until order completion, cart items can be recycled to continue creating
+  > new order request records.
+  >
+  > As part of reverse normalization, this is actually a computable attribute,
+  > but only for performance.
 
 ### `hub_cart_commodity_stocks`
 Final stock information of the item in the cart.
@@ -2244,12 +2300,12 @@ item snapshot, the [hub_cart_commodities](#hub_cart_commodities) record will als
 corresponding `hub_cart_commodity_stocks` records.
 
 **Properties**
-  - `id`: 
-  - `hub_cart_commodity_id`: [hub_cart_commodities](#hub_cart_commodities) of the belonging cart
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
-  - `hub_sale_snapshot_unit_stock_id`: [hub_sale_snapshot_unit_stocks](#hub_sale_snapshot_unit_stocks) of target final stock
-  - `hub_sale_snapshot_unit_stock_price_id`: [hub_sale_snapshot_unit_stock_prices](#hub_sale_snapshot_unit_stock_prices) of the selected price model
-  - `sequence`: The order in which the products are placed in the cart.
+- `id`:
+- `hub_cart_commodity_id`: [hub_cart_commodities](#hub_cart_commodities) of the belonging cart
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units)
+- `hub_sale_snapshot_unit_stock_id`: [hub_sale_snapshot_unit_stocks](#hub_sale_snapshot_unit_stocks) of target final stock
+- `hub_sale_snapshot_unit_stock_price_id`: [hub_sale_snapshot_unit_stock_prices](#hub_sale_snapshot_unit_stock_prices) of the selected price model
+- `sequence`: The order in which the products are placed in the cart.
 
 ### `hub_cart_commodity_stock_choices`
 Information about the final stock options in the cart.
@@ -2272,14 +2328,14 @@ select, enter the
 [candidate items](#hub_sale_snapshot_unit_option_candidates) selected by the [customer](#hub_customers), and if not, enter the value entered by the [customer](#hub_customers).
 
 **Properties**
-  - `id`: 
-  - `hub_cart_commodity_stock_id`: [hub_cart_commodity_stocks.id](#hub_cart_commodity_stocks)
-  - `hub_sale_snapshot_unit_option_id`: [hub_sale_snapshot_unit_options.id](#hub_sale_snapshot_unit_options) of target options
-  - `hub_sale_snapshot_unit_option_candidate_id`
-    > The customer's selected candidate values for the selected option
-    > [hub_sale_snapshot_unit_option_candidates.id](#hub_sale_snapshot_unit_option_candidates)
-  - `value`: The value provided by the customer for the descriptive option.
-  - `sequence`: The order in which the products are placed in the cart.
+- `id`:
+- `hub_cart_commodity_stock_id`: [hub_cart_commodity_stocks.id](#hub_cart_commodity_stocks)
+- `hub_sale_snapshot_unit_option_id`: [hub_sale_snapshot_unit_options.id](#hub_sale_snapshot_unit_options) of target options
+- `hub_sale_snapshot_unit_option_candidate_id`
+  > The customer's selected candidate values for the selected option
+  > [hub_sale_snapshot_unit_option_candidates.id](#hub_sale_snapshot_unit_option_candidates)
+- `value`: The value provided by the customer for the descriptive option.
+- `sequence`: The order in which the products are placed in the cart.
 
 ### `hub_orders`
 Order information.
@@ -2297,105 +2353,105 @@ Of course, not all raw materials in the target shopping cart become order
 products, and only those selected by the customer become [hub_order_goods](#hub_order_goods).
 
 **Properties**
-  - `id`: 
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer you are affiliated with
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `created_at`: The date and time the record was created.
-  - `cancelled_at`: Order cancellation date and time.
+- `id`:
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer you are affiliated with
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `created_at`: The date and time the record was created.
+- `cancelled_at`: Order cancellation date and time.
 
 ### `hub_order_goods`
 Individual product information that constitutes an order.
 
-`hub_order_goods` is an entity that represents each product ordered by 
-[customers](#hub_customers), and the record is created when 
-[raw materials](#hub_cart_commodities) in [shopping cart](#hub_carts) 
+`hub_order_goods` is an entity that represents each product ordered by
+[customers](#hub_customers), and the record is created when
+[raw materials](#hub_cart_commodities) in [shopping cart](#hub_carts)
 are upgraded to products due to the customer's [order request](#hub_orders).
 
-And `hub_order_goods` is a concept that corresponds to [hub_cart_commodities](#hub_cart_commodities), 
+And `hub_order_goods` is a concept that corresponds to [hub_cart_commodities](#hub_cart_commodities),
 or [sales snapshot](#hub_sale_snapshots) units.
 
-In addition, `hub_order_goods` is the most basic unit for the process after 
-the order, that is, after-sales processing (A/S). For example, the unit where 
-a customer issues [issues](#hub_order_good_issues) for ordered products 
+In addition, `hub_order_goods` is the most basic unit for the process after
+the order, that is, after-sales processing (A/S). For example, the unit where
+a customer issues [issues](#hub_order_good_issues) for ordered products
 or requests a refund is this `hub_order_goods`.
 
 **Properties**
-  - `id`: 
-  - `hub_order_id`: [hub_orders.id](#hub_orders) of the order
-  - `hub_cart_commodity_id`: [hub_cart_commodities.id](#hub_cart_commodities) of the product in your cart
-  - `hub_seller_id`
-    > [hub_sellers.id](#hub_sellers) of the affiliated seller
-    > 
-    > Seller information of the affiliated item, recorded again for quick search.
-  - `opened_at`
-    > Contract start date.
-    > 
-    > Unlike the time of order confirmation, the effective date can be pushed back.
-    > 
-    > And the effective date of the contract can be continuously edited until 
-    > it arrives.
-    > 
-    > Also, the monthly fixed fee is calculated based on the start date.
-    > 
-    > Please note that after the customer purchases the seller's API, the review 
-    > and development process is necessary, so the effective date of the contract 
-    > cannot help but be pushed back further than the order confirmation.
-  - `closed_at`
-    > Contract termination date.
-    > 
-    > However, the contract termination date cannot be set immediately. From the 
-    > contract start date, it can only be cancelled after a period of at least 
-    > 1 month has passed. And if the contract has already been started, it can 
-    > only be terminated in 1-month increments.
-  - `sequence`: The order of placement in the order of the attribution.
+- `id`:
+- `hub_order_id`: [hub_orders.id](#hub_orders) of the order
+- `hub_cart_commodity_id`: [hub_cart_commodities.id](#hub_cart_commodities) of the product in your cart
+- `hub_seller_id`
+  > [hub_sellers.id](#hub_sellers) of the affiliated seller
+  >
+  > Seller information of the affiliated item, recorded again for quick search.
+- `opened_at`
+  > Contract start date.
+  >
+  > Unlike the time of order confirmation, the effective date can be pushed back.
+  >
+  > And the effective date of the contract can be continuously edited until
+  > it arrives.
+  >
+  > Also, the monthly fixed fee is calculated based on the start date.
+  >
+  > Please note that after the customer purchases the seller's API, the review
+  > and development process is necessary, so the effective date of the contract
+  > cannot help but be pushed back further than the order confirmation.
+- `closed_at`
+  > Contract termination date.
+  >
+  > However, the contract termination date cannot be set immediately. From the
+  > contract start date, it can only be cancelled after a period of at least
+  > 1 month has passed. And if the contract has already been started, it can
+  > only be terminated in 1-month increments.
+- `sequence`: The order of placement in the order of the attribution.
 
 ### `hub_order_publishes`
 Confirmation information of the order.
 
-`hub_order_publishes` is an entity that visualizes the confirmation 
-information of the order. Therefore, the existence of this entity means that 
-the [order](#hub_orders) requested by [customer](#hub_customers) has 
+`hub_order_publishes` is an entity that visualizes the confirmation
+information of the order. Therefore, the existence of this entity means that
+the [order](#hub_orders) requested by [customer](#hub_customers) has
 been established as a contract and confirmed.
 
-However, even if the contract is confirmed, it does not start immediately. 
-The initiation of the contract can be set individually for each 
-[product](#hub_order_goods), and this is designed so that the initiation 
-of the contract can be postponed because the customer needs to analyze and 
+However, even if the contract is confirmed, it does not start immediately.
+The initiation of the contract can be set individually for each
+[product](#hub_order_goods), and this is designed so that the initiation
+of the contract can be postponed because the customer needs to analyze and
 develop the API after purchasing the seller.
 
-However, even if the initiation of the contract is later, the fixed cost for 
-the first month is converted to a deposit status when the contract becomes 
-effective. Of course, the order contract can be canceled and refunded before 
+However, even if the initiation of the contract is later, the fixed cost for
+the first month is converted to a deposit status when the contract becomes
+effective. Of course, the order contract can be canceled and refunded before
 the initiation of the contract.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_order_id`: [hub_orders.id](#hub_orders) of the order
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `hub_order_id`: [hub_orders.id](#hub_orders) of the order
+- `created_at`: The date and time the record was created.
 
 ### `hub_order_good_calls`
 API call history for ordered products.
 
-An entity that records the API calls made by customers based on the products 
+An entity that records the API calls made by customers based on the products
 they ordered.
 
 **Properties**
-  - `id`: 
-  - `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods) of the order goods
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the unit corresponding to the called API
-  - `arguments`
-    > A list of argument values entered.
-    > 
-    > Encrypted because it may contain personal information.
-  - `output`
-    > The return value as the execution result.
-    > 
-    > Encrypted because it may contain personal information.
-  - `method`: API call method.
-  - `path`: API call path.
-  - `status`: Response code from the seller server.
-  - `created_at`: The date and time the record was created.
-  - `respond_at`: API call completion date and time.
+- `id`:
+- `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods) of the order goods
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the unit corresponding to the called API
+- `arguments`
+  > A list of argument values entered.
+  >
+  > Encrypted because it may contain personal information.
+- `output`
+  > The return value as the execution result.
+  >
+  > Encrypted because it may contain personal information.
+- `method`: API call method.
+- `path`: API call path.
+- `status`: Response code from the seller server.
+- `created_at`: The date and time the record was created.
+- `respond_at`: API call completion date and time.
 
 
 ## Issues
@@ -2458,106 +2514,106 @@ erDiagram
 ### `hub_order_good_issues`
 Purchased product related issue posting.
 
-`hub_order_good_issues` is a [bulletin board](#bbs_articles) where 
-customers and [sellers](#hub_sellers) can raise issues with respect to 
-[products](#hub_order_goods) that [customers](#hub_customers) have 
+`hub_order_good_issues` is a [bulletin board](#bbs_articles) where
+customers and [sellers](#hub_sellers) can raise issues with respect to
+[products](#hub_order_goods) that [customers](#hub_customers) have
 ordered [hub_orders](#hub_orders) and [completed payment](#hub_order_publishes).
 
-Customers and sellers can write issue postings by topic for products and 
+Customers and sellers can write issue postings by topic for products and
 continue discussions with [comments](#hub_order_good_issue_comments).
 
-In addition, among the types of issues, customers can request additional 
-work such as customization or modification from sellers. In this case, sellers 
-can charge [commission fees](#hub_order_good_issue_fees) to customers and 
+In addition, among the types of issues, customers can request additional
+work such as customization or modification from sellers. In this case, sellers
+can charge [commission fees](#hub_order_good_issue_fees) to customers and
 claim reasonable costs for additional work.
 
-Finally, the customer or seller who created the issue can close the issue 
-after completing it (`closed_at`). However, even after closing the issue, 
-comments can continue to be written on the issue, and the seller can also 
+Finally, the customer or seller who created the issue can close the issue
+after completing it (`closed_at`). However, even after closing the issue,
+comments can continue to be written on the issue, and the seller can also
 charge a fee.
 
 **Properties**
-  - `id`: PK + FK.
-  - `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods) of the order goods
-  - `hub_customer_id`: Issue Author Customer [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `actor_type`
-    > Type of issue author
-    > 
-    > - customer: customer
-    > - seller: seller
-  - `closed_at`: You should be able to tell who closed it later
+- `id`: PK + FK.
+- `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods) of the order goods
+- `hub_customer_id`: Issue Author Customer [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `actor_type`
+  > Type of issue author
+  >
+  > - customer: customer
+  > - seller: seller
+- `closed_at`: You should be able to tell who closed it later
 
 ### `hub_order_good_issue_comments`
 Comments written on an issue.
 
-`hub_order_good_issue_comments` is a subtype entity of [bbs_article_comments](#bbs_article_comments), 
-and is used when [customers](#hub_customers) and [sellers](#hub_sellers) 
-communicate with each other regarding the [issues](#hub_order_issues) 
+`hub_order_good_issue_comments` is a subtype entity of [bbs_article_comments](#bbs_article_comments),
+and is used when [customers](#hub_customers) and [sellers](#hub_sellers)
+communicate with each other regarding the [issues](#hub_order_issues)
 written for [ordered products](#hub_order_goods).
 
 Note that comments can continue to be written even after an issue is closed.
 
 **Properties**
-  - `id`: PK + FK.
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who wrote the comment
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `actor_type`
-    > Type of customer who wrote the comment
-    > 
-    > - customer: customer
-    > - seller: seller
+- `id`: PK + FK.
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who wrote the comment
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `actor_type`
+  > Type of customer who wrote the comment
+  >
+  > - customer: customer
+  > - seller: seller
 
 ### `hub_order_good_issue_fees`
 Offer a fee for resolving an issue.
 
-`HubOrderItemIssueFee` means the fee that [seller](#hub_sellers) 
-offers to [customer](#hub_customers) for resolving 
-[issue](#hub_order_issues) for [product](#hub_order_goods) ordered by 
-a customer. This is usually caused when a customer requests additional work 
+`HubOrderItemIssueFee` means the fee that [seller](#hub_sellers)
+offers to [customer](#hub_customers) for resolving
+[issue](#hub_order_issues) for [product](#hub_order_goods) ordered by
+a customer. This is usually caused when a customer requests additional work
 such as customization or modification through an issue.
 
-The customer may [hub_order_good_issue_fee_payments](#hub_order_good_issue_fee_payments) pay the fee, 
-or may decline, and in some cases may negotiate the price. If the seller 
-wants to adjust the price in response, he/she can delete the current record 
+The customer may [hub_order_good_issue_fee_payments](#hub_order_good_issue_fee_payments) pay the fee,
+or may decline, and in some cases may negotiate the price. If the seller
+wants to adjust the price in response, he/she can delete the current record
 and reissue a new fee record.
 
 **Properties**
-  - `id`: 
-  - `hub_order_good_issue_id`: [hub_order_good_issues.id](#hub_order_good_issues)
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who submitted the commission
-  - `hub_seller_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `value`: Fee amount.
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`
-    > Record deletion date.
-    > 
-    > Cannot be deleted after the customer [hub_order_good_issue_fee_accepts](#hub_order_good_issue_fee_accepts) accepts the commission fee.
+- `id`:
+- `hub_order_good_issue_id`: [hub_order_good_issues.id](#hub_order_good_issues)
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who submitted the commission
+- `hub_seller_id`: Affiliate member's [hub_members.id](#hub_members)
+- `value`: Fee amount.
+- `created_at`: The date and time the record was created.
+- `deleted_at`
+  > Record deletion date.
+  >
+  > Cannot be deleted after the customer [hub_order_good_issue_fee_accepts](#hub_order_good_issue_fee_accepts) accepts the commission fee.
 
 ### `hub_order_good_issue_fee_accepts`
 Accepting a fee for an issue.
 
-`hub_order_good_issue_fee_accepts` is an entity that embodies the act of 
-[customers](#hub_customers) accepting and accepting the 
+`hub_order_good_issue_fee_accepts` is an entity that embodies the act of
+[customers](#hub_customers) accepting and accepting the
 [fee](#hub_order_good_issue_fees) charged by [sellers](#hub_sellers).
 
-Note that the moment when the fee is accepted by the customer and the moment 
-when it takes effect can be different. That is, the fee is accepted at this 
+Note that the moment when the fee is accepted by the customer and the moment
+when it takes effect can be different. That is, the fee is accepted at this
 point and the deposit is withdrawn, but the effect of this can be postponed,
-so that the seller can start work on it in the future, or leave room for 
+so that the seller can start work on it in the future, or leave room for
 a change of mind in the future.
 
 **Properties**
-  - `id`: 
-  - `hub_order_good_issue_fee_id`: 
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who accepted the commission
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `created_at`: The date and time the record was created.
-  - `published_at`: Effective date and time of acceptance of the fee.
-  - `cancelled_at`
-    > Date of cancellation of acceptance of the fee.
-    > 
-    > Cannot be cancelled after it has become effective.
+- `id`:
+- `hub_order_good_issue_fee_id`:
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who accepted the commission
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `created_at`: The date and time the record was created.
+- `published_at`: Effective date and time of acceptance of the fee.
+- `cancelled_at`
+  > Date of cancellation of acceptance of the fee.
+  >
+  > Cannot be cancelled after it has become effective.
 
 
 ## Deposits
@@ -2642,143 +2698,143 @@ erDiagram
 ### `hub_deposits`
 Meta information of deposits.
 
-`hub_deposits` is an entity that visualizes the specifications for 
-deposit and withdrawal in the exchange. In other words, `hub_deposits` is not 
-a [hub_deposit_histories](#hub_deposit_histories) that indicates the deposit and withdrawal 
-history of deposits, but is simply metadata that specifies the specifications 
+`hub_deposits` is an entity that visualizes the specifications for
+deposit and withdrawal in the exchange. In other words, `hub_deposits` is not
+a [hub_deposit_histories](#hub_deposit_histories) that indicates the deposit and withdrawal
+history of deposits, but is simply metadata that specifies the specifications
 for the scenario in which deposits and withdrawals occur.
 
-For reference, this generative hub cannot pay cash immediately at the time 
-of purchase of goods (API call time) due to the nature of the API as a 
-transaction object. Instead, this system charges the deposit to the customer 
+For reference, this generative hub cannot pay cash immediately at the time
+of purchase of goods (API call time) due to the nature of the API as a
+transaction object. Instead, this system charges the deposit to the customer
 and deducts it every time the API is called.
 
 **Properties**
-  - `id`: 
-  - `hub_customer_id`: [hub_customers.id](#hub_customers)
-  - `hub_administrator_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `code`: Identifier code.
-  - `source`: The source table that causes deposits and withdrawals of deposits.
-  - `direction`
-    > Deposit/withdrawal direction.
-    > 
-    > - `1`: Deposit
-    > - `-1`: Deduct
-  - `created_at`: The date and time the record was created.
-  - `deleted_at`: Date and time of record deletion.
+- `id`:
+- `hub_customer_id`: [hub_customers.id](#hub_customers)
+- `hub_administrator_id`: Affiliate member's [hub_members.id](#hub_members)
+- `code`: Identifier code.
+- `source`: The source table that causes deposits and withdrawals of deposits.
+- `direction`
+  > Deposit/withdrawal direction.
+  >
+  > - `1`: Deposit
+  > - `-1`: Deduct
+- `created_at`: The date and time the record was created.
+- `deleted_at`: Date and time of record deletion.
 
 ### `hub_deposit_histories`
 Customer (Citizen) deposit and withdrawal history.
 
-`hub_deposit_histories` is an entity that visualizes the customer's 
+`hub_deposit_histories` is an entity that visualizes the customer's
 deposit and withdrawal history.
 
 It can be considered a kind of accounting ledger table.
 
 **Properties**
-  - `id`: 
-  - `hub_deposit_id`: [hub_deposits.id](#hub_deposits) of the deposit meta information
-  - `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizenship
-  - `source_id`: The ID of the source record that caused the deposit/withdrawal.
-  - `value`
-    > The amount of deposit and withdrawal.
-    > 
-    > Must be a positive number, and whether there is a deposit or withdrawal 
-    > can be seen in [hub_deposits.direction](#hub_deposits). If you want to express the 
-    > figures for deposit and withdrawal as positive/negative numbers, you can 
-    > also multiply this field value by the [hub_deposits.direction](#hub_deposits) value.
-  - `balance`
-    > Deposit balance.
-    > 
-    > Deposit balance since the current record was issued.
-    > 
-    > Originally a computable element, but denormalized for faster lookup.
-  - `created_at`: The date and time the record was created.
-  - `cancelled_at`
-    > Record Cancellation Date.
-    > 
-    > The time when the deposit/withdrawal was canceled for some reason.
+- `id`:
+- `hub_deposit_id`: [hub_deposits.id](#hub_deposits) of the deposit meta information
+- `hub_citizen_id`: [hub_citizens.id](#hub_citizens) of the citizenship
+- `source_id`: The ID of the source record that caused the deposit/withdrawal.
+- `value`
+  > The amount of deposit and withdrawal.
+  >
+  > Must be a positive number, and whether there is a deposit or withdrawal
+  > can be seen in [hub_deposits.direction](#hub_deposits). If you want to express the
+  > figures for deposit and withdrawal as positive/negative numbers, you can
+  > also multiply this field value by the [hub_deposits.direction](#hub_deposits) value.
+- `balance`
+  > Deposit balance.
+  >
+  > Deposit balance since the current record was issued.
+  >
+  > Originally a computable element, but denormalized for faster lookup.
+- `created_at`: The date and time the record was created.
+- `cancelled_at`
+  > Record Cancellation Date.
+  >
+  > The time when the deposit/withdrawal was canceled for some reason.
 
 ### `hub_deposit_charges`
 Customer's deposit deposit request.
 
 Deposits refer to the amount that customers have prepaid and charged in advance.
 
-Since this generative hub is an API that is a transaction target, it is impossible 
-for customers to pay cash immediately at the time of purchase of goods 
-(API call time). Instead, this system charges the customer with a deposit and 
+Since this generative hub is an API that is a transaction target, it is impossible
+for customers to pay cash immediately at the time of purchase of goods
+(API call time). Instead, this system charges the customer with a deposit and
 deducts it every time the API is called.
 
-And `hub_deposit_charges` is an entity that visualizes this "deposit request" 
-for the deposit. In other words, `hub_deposit_charges` is only the stage where 
-the customer expresses his/her intention to deposit the deposit, and it is 
+And `hub_deposit_charges` is an entity that visualizes this "deposit request"
+for the deposit. In other words, `hub_deposit_charges` is only the stage where
+the customer expresses his/her intention to deposit the deposit, and it is
 important to note that the deposit has not yet been completed.
 
 **Properties**
-  - `id`: 
-  - `hub_customer_id`: [hub_deposits.id](#hub_deposits) of the deposit meta information
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `value`: Recharge amount.
-  - `created_at`: Date and time of charging application.
-  - `deleted_at`
-    > Record deletion date.
-    > 
-    > If closed during the order application stage.
+- `id`:
+- `hub_customer_id`: [hub_deposits.id](#hub_deposits) of the deposit meta information
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `value`: Recharge amount.
+- `created_at`: Date and time of charging application.
+- `deleted_at`
+  > Record deletion date.
+  >
+  > If closed during the order application stage.
 
 ### `hub_deposit_charge_publishes`
 Payment progress information for deposit of deposit.
 
-`hub_deposit_charge_publishes` is an entity that visualizes the process of 
-[customers](#hub_customers) requesting [deposit](#hub_deposit_charges) 
+`hub_deposit_charge_publishes` is an entity that visualizes the process of
+[customers](#hub_customers) requesting [deposit](#hub_deposit_charges)
 and proceeding with payment.
 
-Please note that the existence of the `hub_deposit_charge_publishes` record does 
-not mean that the payment has been completed. Payment is only completed when 
-the payment is completed. This is what the "process of proceeding with payment" 
+Please note that the existence of the `hub_deposit_charge_publishes` record does
+not mean that the payment has been completed. Payment is only completed when
+the payment is completed. This is what the "process of proceeding with payment"
 mentioned above means.
 
-However, even after the payment has been made, there are cases where it is 
+However, even after the payment has been made, there are cases where it is
 suddenly canceled, so you should also be careful.
 
 **Properties**
-  - `id`: 
-  - `hub_deposit_charge_id`: [hub_deposit_charges.id](#hub_deposit_charges)
-  - `password`
-    > Password to be used in the Payment system.
-    > 
-    > This is a randomly issued password for encryption of payment history by 
-    > this system, and has absolutely nothing to do with the user.
-  - `created_at`: The date and time the record was created.
-  - `paid_at`
-    > Payment completion date and time.
-    > 
-    > The charging application completion date and payment date may be different. 
-    > This is the case for "virtual account payment".
-  - `cancelled_at`: Payment cancellation/refund date and time.
+- `id`:
+- `hub_deposit_charge_id`: [hub_deposit_charges.id](#hub_deposit_charges)
+- `password`
+  > Password to be used in the Payment system.
+  >
+  > This is a randomly issued password for encryption of payment history by
+  > this system, and has absolutely nothing to do with the user.
+- `created_at`: The date and time the record was created.
+- `paid_at`
+  > Payment completion date and time.
+  >
+  > The charging application completion date and payment date may be different.
+  > This is the case for "virtual account payment".
+- `cancelled_at`: Payment cancellation/refund date and time.
 
 ### `hub_deposit_donations`
 Deposit Donations.
 
-`hub_deposit_donations` is an entity that embodies the case where 
-[administrators](#hub_administrators) directly donate deposits to specific 
+`hub_deposit_donations` is an entity that embodies the case where
+[administrators](#hub_administrators) directly donate deposits to specific
 [customer citizens](#hub_citizens).
 
-It is designed assuming that customers will deliver deposits face-to-face, 
-rather than through our payment system. In some cases, you could also consider 
-signing a postpaid contract with a specific company and granting that company 
+It is designed assuming that customers will deliver deposits face-to-face,
+rather than through our payment system. In some cases, you could also consider
+signing a postpaid contract with a specific company and granting that company
 an appropriate amount of deposits every month.
 
 **Properties**
-  - `id`: 
-  - `hub_customer_id`: [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `hub_citizen_id`: Citizens who received the deposit [hub_citizens.id](#hub_citizens)
-  - `value`: Deposit contribution amount.
-  - `reason`
-    > Reason for granting the deposit.
-    > 
-    > Why did the administrator grant the deposit to the citizen?
-  - `created_at`: The date and time the record was created.
+- `id`:
+- `hub_customer_id`: [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `hub_citizen_id`: Citizens who received the deposit [hub_citizens.id](#hub_citizens)
+- `value`: Deposit contribution amount.
+- `reason`
+  > Reason for granting the deposit.
+  >
+  > Why did the administrator grant the deposit to the citizen?
+- `created_at`: The date and time the record was created.
 
 
 ## Coupons
@@ -2816,6 +2872,11 @@ erDiagram
 "hub_coupon_criteria_of_sections" {
   String id PK
   String hub_section_id FK
+}
+"hub_coupon_criteria_of_channels" {
+  String id PK
+  String hub_channel_id FK
+  String hub_channel_category_id FK "nullable"
 }
 "hub_coupon_criteria_of_sellers" {
   String id PK
@@ -2856,6 +2917,7 @@ erDiagram
 }
 "hub_coupon_criterias" }o--|| "hub_coupons" : coupon
 "hub_coupon_criteria_of_sections" |o--|| "hub_coupon_criterias" : base
+"hub_coupon_criteria_of_channels" |o--|| "hub_coupon_criterias" : base
 "hub_coupon_criteria_of_sellers" |o--|| "hub_coupon_criterias" : base
 "hub_coupon_criteria_of_sales" |o--|| "hub_coupon_criterias" : base
 "hub_coupon_criteria_of_funnels" |o--|| "hub_coupon_criterias" : base
@@ -2870,122 +2932,122 @@ Discount coupons.
 
 `hub_coupons` is an entity that embodies discount coupons on the exchange.
 
-However, `hub_coupons` only contains the specification information for 
-discount coupons. Please note that this is a different concept from 
-[hub_coupon_tickets](#hub_coupon_tickets), which means issuing discount coupons, or 
+However, `hub_coupons` only contains the specification information for
+discount coupons. Please note that this is a different concept from
+[hub_coupon_tickets](#hub_coupon_tickets), which means issuing discount coupons, or
 [hub_coupon_ticket_payments](#hub_coupon_ticket_payments), which means paying them.
 
-In addition, discount coupons are applied to [order](#hub_orders) units, 
-but each has its own unique restrictions. For example, a coupon with a 
-[seller restriction](#hub_coupon_criteria_of_sellers) can only be used for 
-[listing snapshots](#hub_sale_snapshots) registered by the seller, or it 
-cannot be used. In addition, there are restrictions such as a minimum amount 
+In addition, discount coupons are applied to [order](#hub_orders) units,
+but each has its own unique restrictions. For example, a coupon with a
+[seller restriction](#hub_coupon_criteria_of_sellers) can only be used for
+[listing snapshots](#hub_sale_snapshots) registered by the seller, or it
+cannot be used. In addition, there are restrictions such as a minimum amount
 limit for using discount coupons and a maximum discount amount.
 
-In addition, you can set whether to issue discount coupons publicly or 
-only to those who know a specific issuance code. In addition, there are 
-restrictions such as having an expiration date for issued discount coupons, 
+In addition, you can set whether to issue discount coupons publicly or
+only to those who know a specific issuance code. In addition, there are
+restrictions such as having an expiration date for issued discount coupons,
 or only issuing them to customers who come in through a specific path.
 
-For more information, please refer to the properties below and the 
+For more information, please refer to the properties below and the
 sub-entities described later.
 
 **Properties**
-  - `id`: 
-  - `hub_customer_id`
-    > Customers of the seller or administrator who registered the discount coupon 
-    > [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `actor_type`
-    > Type of user who registered the discount coupon.
-    > 
-    > - seller: seller
-    > - administrator: administrator
-  - `name`: Representative name of discount coupon.
-  - `access`
-    > Can discount coupons be viewed publicly?
-    > 
-    > - public: Coupons available for ordering can be viewed in bulk
-    > - private: Unable to view in bulk
-    > - Randomly assigned by the seller or administrator
-    > - Can only be issued through a one-time link
-  - `exclusive`
-    > Exclusivity.
-    > 
-    > An exclusive discount coupon refers to a discount coupon that has an
-    > exclusive relationship with other discount coupons and can only be used alone.
-    > In other words, when an exclusive discount coupon is used, no other discount
-    > coupon can be used for the same [order](#hub_orders) or
-    > [product](#hub_order_goods).
-  - `unit`
-    > Discount Unit.
-    > 
-    > If the discount unit is an absolute amount, it is applied only once to
-    > [fixed cost](#hub_sale_snapshot_unit_stock_prices),
-    > while if the unit is a percentage, it is applied repeatedly every month to
-    > both fixed and variable costs.
-    > 
-    > - amount: absolute amount
-    > - percent: percent
-  - `value`
-    > Discount amount.
-    > 
-    > If the discount unit is a percentage, enter 0 to 100, if it is an absolute
-    > amount, enter freely.
-  - `threshold`
-    > Minimum purchase amount for discount.
-    > 
-    > If this value is set, the discount coupon cannot be applied to the total
-    > order amount (monthly fixed cost) that falls below this value. Of course,
-    > if this value is `NULL`, there is no condition for the minimum amount.
-  - `limit`
-    > Maximum amount of discount possible.
-    > 
-    > If you set this value, no matter how much you order, it will not be discounted
-    > more than this amount.
-  - `volume`
-    > Issuance quantity limit.
-    > 
-    > If there is a limit on the issuance quantity, tickets cannot be issued beyond
-    > this value.
-    > 
-    > In other words, the concept of first-come-first-served N coupons is created.
-  - `volume_per_citizen`
-    > Limit the issuance quantity per person.
-    > 
-    > As a limit on the total issuance quantity per person, it is usually assigned
-    > 1 to limit duplicate issuance to the same citizen, or NULL to not impose
-    > a limit.
-    > 
-    > Of course, you can limit the total issuance quantity to the same citizen by
-    > assigning a value of N.
-  - `expired_in`
-    > Expiration date.
-    > 
-    > The concept of expiry after N days after receiving the discount coupon ticket.
-    > 
-    > Therefore, the customer should consume the ticket within N days after issuing it.
-  - `expired_at`
-    > Expiration date.
-    > 
-    > The concept of expiration after YYYY-MM-DD has passed after receiving the
-    > discount coupon ticket.
-    > 
-    > Double restriction is possible with [hub_coupons.expired_in](#hub_coupons).
-  - `opened_at`: Issuance start date.
-  - `closed_at`
-    > Issuance End Date.
-    > 
-    > Tickets cannot be issued after this date.
-    > 
-    > However, previously issued tickets can still be used until their
-    > [expiration date](#hub_coupon_tickets).
-  - `created_at`: The date and time the record was created.
-  - `updated_at`
-    > Discount coupon editing date.
-    > 
-    > Editing is only possible before the issuance start date.
-  - `deleted_at`: Discount coupon deletion date.
+- `id`:
+- `hub_customer_id`
+  > Customers of the seller or administrator who registered the discount coupon
+  > [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `actor_type`
+  > Type of user who registered the discount coupon.
+  >
+  > - seller: seller
+  > - administrator: administrator
+- `name`: Representative name of discount coupon.
+- `access`
+  > Can discount coupons be viewed publicly?
+  >
+  > - public: Coupons available for ordering can be viewed in bulk
+  > - private: Unable to view in bulk
+  > - Randomly assigned by the seller or administrator
+  > - Can only be issued through a one-time link
+- `exclusive`
+  > Exclusivity.
+  >
+  > An exclusive discount coupon refers to a discount coupon that has an
+  > exclusive relationship with other discount coupons and can only be used alone.
+  > In other words, when an exclusive discount coupon is used, no other discount
+  > coupon can be used for the same [order](#hub_orders) or
+  > [product](#hub_order_goods).
+- `unit`
+  > Discount Unit.
+  >
+  > If the discount unit is an absolute amount, it is applied only once to
+  > [fixed cost](#hub_sale_snapshot_unit_stock_prices),
+  > while if the unit is a percentage, it is applied repeatedly every month to
+  > both fixed and variable costs.
+  >
+  > - amount: absolute amount
+  > - percent: percent
+- `value`
+  > Discount amount.
+  >
+  > If the discount unit is a percentage, enter 0 to 100, if it is an absolute
+  > amount, enter freely.
+- `threshold`
+  > Minimum purchase amount for discount.
+  >
+  > If this value is set, the discount coupon cannot be applied to the total
+  > order amount (monthly fixed cost) that falls below this value. Of course,
+  > if this value is `NULL`, there is no condition for the minimum amount.
+- `limit`
+  > Maximum amount of discount possible.
+  >
+  > If you set this value, no matter how much you order, it will not be discounted
+  > more than this amount.
+- `volume`
+  > Issuance quantity limit.
+  >
+  > If there is a limit on the issuance quantity, tickets cannot be issued beyond
+  > this value.
+  >
+  > In other words, the concept of first-come-first-served N coupons is created.
+- `volume_per_citizen`
+  > Limit the issuance quantity per person.
+  >
+  > As a limit on the total issuance quantity per person, it is usually assigned
+  > 1 to limit duplicate issuance to the same citizen, or NULL to not impose
+  > a limit.
+  >
+  > Of course, you can limit the total issuance quantity to the same citizen by
+  > assigning a value of N.
+- `expired_in`
+  > Expiration date.
+  >
+  > The concept of expiry after N days after receiving the discount coupon ticket.
+  >
+  > Therefore, the customer should consume the ticket within N days after issuing it.
+- `expired_at`
+  > Expiration date.
+  >
+  > The concept of expiration after YYYY-MM-DD has passed after receiving the
+  > discount coupon ticket.
+  >
+  > Double restriction is possible with [hub_coupons.expired_in](#hub_coupons).
+- `opened_at`: Issuance start date.
+- `closed_at`
+  > Issuance End Date.
+  >
+  > Tickets cannot be issued after this date.
+  >
+  > However, previously issued tickets can still be used until their
+  > [expiration date](#hub_coupon_tickets).
+- `created_at`: The date and time the record was created.
+- `updated_at`
+  > Discount coupon editing date.
+  >
+  > Editing is only possible before the issuance start date.
+- `deleted_at`: Discount coupon deletion date.
 
 ### `hub_coupon_criterias`
 Supertype for the conditions for the application of discount coupons.
@@ -3005,18 +3067,18 @@ applicable only to the reference target, and on the contrary, if the `direction`
 value is ``exclude``, the coupon is not applicable to the reference target.
 
 **Properties**
-  - `id`: 
-  - `hub_coupon_id`: [hub_coupons.id](#hub_coupons) of the affiliate discount coupon
-  - `type`
-    > The type of discount coupon.
-    > 
-    > Indicates what subtype it has.
-  - `direction`
-    > Direction in which constraints are applied.
-    > 
-    > - include: inclusion conditions
-    > - exclude: exclusion conditions
-  - `sequence`: The order of placement in the affiliate discount coupon.
+- `id`:
+- `hub_coupon_id`: [hub_coupons.id](#hub_coupons) of the affiliate discount coupon
+- `type`
+  > The type of discount coupon.
+  >
+  > Indicates what subtype it has.
+- `direction`
+  > Direction in which constraints are applied.
+  >
+  > - include: inclusion conditions
+  > - exclude: exclusion conditions
+- `sequence`: The order of placement in the affiliate discount coupon.
 
 ### `hub_coupon_criteria_of_sections`
 Conditions for sections of discount coupons.
@@ -3032,8 +3094,25 @@ records in one [coupons](#hub_coupons), then the condition is set for each
 group. It is a coupon that can be applied or not applied to the target sections.
 
 **Properties**
-  - `id`: 
-  - `hub_section_id`: [hub_coupon_criterias.id](#hub_coupon_criterias) of the affiliate discount coupon
+- `id`:
+- `hub_section_id`: [hub_coupon_criterias.id](#hub_coupon_criterias) of the affiliate discount coupon
+
+### `hub_coupon_criteria_of_channels`
+Conditions for discount coupon channels.
+
+`hub_coupon_criteria_of_channels` is a subtype entity of [hub_coupon_criterias](#hub_coupon_criterias), and is used to set conditions for a specific [channel](#hub_channels) or a category of the corresponding [channel](#hub_channel_categories).
+
+If the value of [hub_coupon_criterias.direction](#hub_coupon_criterias) is `"include"`,
+the coupon is usable only for the corresponding channel (or category), and
+if it is `"exclude"`, the coupon is unusable. And if there are multiple
+`hub_coupon_criteria_of_channels` records in one [coupon](#hub_coupons),
+then the condition is applied as a group. For the target channels and categories,
+the coupon is applicable or inapplicable.
+
+**Properties**
+- `id`:
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the target channel
+- `hub_channel_category_id`: [hub_channel_categories.id](#hub_channel_categories) of the target channel category
 
 ### `hub_coupon_criteria_of_sellers`
 Conditions for sellers of discount coupons.
@@ -3051,8 +3130,8 @@ And if there are multiple `hub_coupon_criteria_of_sellers` records in one
 coupon that can or cannot be applied to the target sellers.
 
 **Properties**
-  - `id`: 
-  - `hub_seller_id`: Target seller's [hub_sellers.id](#hub_sellers)
+- `id`:
+- `hub_seller_id`: Target seller's [hub_sellers.id](#hub_sellers)
 
 ### `hub_coupon_criteria_of_sales`
 Conditions for a specific item of a discount coupon.
@@ -3069,8 +3148,8 @@ And if there are multiple `hub_coupon_criteria_of_sales` records in a
 a coupon that can or cannot be applied to the target items.
 
 **Properties**
-  - `id`: 
-  - `hub_sale_id`: [hub_sales.id](#hub_sales) of the target property
+- `id`:
+- `hub_sale_id`: [hub_sales.id](#hub_sales) of the target property
 
 ### `hub_coupon_criteria_of_funnels`
 Limiting the inflow path of discount coupons.
@@ -3086,15 +3165,15 @@ There are three ways to limit the inflow path. First is
 can restrict it by specific URL or variable unit.
 
 **Properties**
-  - `id`: PK + FK.
-  - `kind`
-    > What kind of funnel is it?
-    > 
-    > - path
-    > - referrer
-    > - variable
-  - `key`: The key of the constraint, used when `kind` is "variable".
-  - `value`: The value of the constraint.
+- `id`: PK + FK.
+- `kind`
+  > What kind of funnel is it?
+  >
+  > - path
+  > - referrer
+  > - variable
+- `key`: The key of the constraint, used when `kind` is "variable".
+- `value`: The value of the constraint.
 
 ### `hub_coupon_tickets`
 Discount coupon ticket issuance history.
@@ -3111,67 +3190,67 @@ after that period. Of course, if the discount coupon ticket was used
 [hub_coupon_ticket_payments](#hub_coupon_ticket_payments) is used.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer you are affiliated with
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `hub_coupon_id`: [hub_coupons.id](#hub_coupons) of the coupon
-  - `hub_coupon_disposable_id`
-    > [hub_coupon_disposables.id](#hub_coupon_disposables) of the disposable code
-    > 
-    > Used when this ticket was issued through a disposable code of a private
-    > discount coupon.
-  - `created_at`: Ticket issuance date and time.
-  - `expired_at`: Ticket expiration date.
+- `id`: Primary Key.
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer you are affiliated with
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `hub_coupon_id`: [hub_coupons.id](#hub_coupons) of the coupon
+- `hub_coupon_disposable_id`
+  > [hub_coupon_disposables.id](#hub_coupon_disposables) of the disposable code
+  >
+  > Used when this ticket was issued through a disposable code of a private
+  > discount coupon.
+- `created_at`: Ticket issuance date and time.
+- `expired_at`: Ticket expiration date.
 
 ### `hub_coupon_ticket_payments`
 Discount coupon ticket payment (payment) history.
 
-`hub_coupon_ticket_payments` is an entity that visualizes payment information 
-for [hub_coupon_tickets](#hub_coupon_tickets) discount coupon tickets for 
-[orders](#hub_orders). It is used when [consumers](#hub_customers) 
-use the [discount coupon tickets](#hub_coupon_tickets) they received for 
+`hub_coupon_ticket_payments` is an entity that visualizes payment information
+for [hub_coupon_tickets](#hub_coupon_tickets) discount coupon tickets for
+[orders](#hub_orders). It is used when [consumers](#hub_customers)
+use the [discount coupon tickets](#hub_coupon_tickets) they received for
 [orders](#hub_orders) and receive a deduction for the payment amount.
 
-Also, [hub_orders](#hub_orders) itself is not an entity used in the situation where 
-an order is completed, but is an entity designed to express the order 
-application stage as well. Therefore, even if this `hub_coupon_ticket_payments` 
-record is created, the [tickets](#hub_coupon_tickets) that are actually 
-attributed do not disappear. Until the customer extends the order, the tickets 
+Also, [hub_orders](#hub_orders) itself is not an entity used in the situation where
+an order is completed, but is an entity designed to express the order
+application stage as well. Therefore, even if this `hub_coupon_ticket_payments`
+record is created, the [tickets](#hub_coupon_tickets) that are actually
+attributed do not disappear. Until the customer extends the order, the tickets
 can be understood as a kind of deposit status.
 
-Also, this record can be deleted by the customer himself by reversing the 
-payment of the ticket, but the order itself is also canceled and deleted 
+Also, this record can be deleted by the customer himself by reversing the
+payment of the ticket, but the order itself is also canceled and deleted
 together.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_coupon_ticket_id`: [hub_coupon_tickets.id](#hub_coupon_tickets) of the attached ticket
-  - `hub_order_id`: [hub_orders.id](#hub_orders) of target order
-  - `sequence`: The order of placement in the order of the attribution.
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `hub_coupon_ticket_id`: [hub_coupon_tickets.id](#hub_coupon_tickets) of the attached ticket
+- `hub_order_id`: [hub_orders.id](#hub_orders) of target order
+- `sequence`: The order of placement in the order of the attribution.
+- `created_at`: The date and time the record was created.
 
 ### `hub_coupon_disposables`
 Discount coupon issuance code management.
 
-If a discount coupon is not publicly available so that anyone can receive the 
+If a discount coupon is not publicly available so that anyone can receive the
 ticket, but must enter a specific password (one-time code) to receive it,
 then this `hub_coupon_disposables` entity is used.
 
 And this code is "one-time". That is, if any customer enters the code,
-then the code is discarded at the point when the ticket issuance to the customer 
-is completed. Therefore, if you want to issue tickets multiple times with a 
-discount coupon as a secret code, the issuance code must also be supported in 
+then the code is discarded at the point when the ticket issuance to the customer
+is completed. Therefore, if you want to issue tickets multiple times with a
+discount coupon as a secret code, the issuance code must also be supported in
 the same quantity.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_coupon_id`: [hub_coupons.id](#hub_coupons) of the affiliate discount coupon
-  - `code`
-    > Identifier code.
-    > 
-    > One-time issuance code.
-  - `created_at`: The date and time the record was created.
-  - `expired_at`: The expiration date of the single-use code.
+- `id`: Primary Key.
+- `hub_coupon_id`: [hub_coupons.id](#hub_coupons) of the affiliate discount coupon
+- `code`
+  > Identifier code.
+  >
+  > One-time issuance code.
+- `created_at`: The date and time the record was created.
+- `expired_at`: The expiration date of the single-use code.
 
 
 ## PushMessage
@@ -3210,46 +3289,46 @@ erDiagram
 Metadata information for push messages.
 
 **Properties**
-  - `id`: Primary Key.
-  - `code`: Identifier code.
-  - `source`: The name of the source table that generates the push message.
-  - `target`
-    > The recipient actor type of the push message.
-    > 
-    > - customer
-    > - seller
-    > - administrator
-  - `created_at`: Creation time of record.
-  - `deleted_at`: Deleted time of record.
+- `id`: Primary Key.
+- `code`: Identifier code.
+- `source`: The name of the source table that generates the push message.
+- `target`
+  > The recipient actor type of the push message.
+  >
+  > - customer
+  > - seller
+  > - administrator
+- `created_at`: Creation time of record.
+- `deleted_at`: Deleted time of record.
 
 ### `hub_push_message_contents`
 Content information of the push message.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_push_message_id`: [hub_push_messages.id](#hub_push_messages) in the attributed push message metadata
-  - `title`: Content title.
-  - `body`: Body of content.
-  - `created_at`
-    > Record Creation Date.
-    > 
-    > The date and time the push message was first created or the content was changed.
+- `id`: Primary Key.
+- `hub_push_message_id`: [hub_push_messages.id](#hub_push_messages) in the attributed push message metadata
+- `title`: Content title.
+- `body`: Body of content.
+- `created_at`
+  > Record Creation Date.
+  >
+  > The date and time the push message was first created or the content was changed.
 
 ### `hub_push_message_histories`
 List of push message sending history.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_push_message_content_id`: [hub_push_message_contents.id](#hub_push_message_contents) of the attributed push message content
-  - `source_id`: The ID of the source record that generated the push message.
-  - `hub_customer_receiver_id`: [hub_customers.id](#hub_customers) of customers who will receive push messages
-  - `hub_customer_reader_id`: [hub_customers.id](#hub_customers) of customers who received and read the push message
-  - `variables`
-    > Bound variable JSON (type `Record<string, string>`)
-    > 
-    > Encrypted because it may contain personal information.
-  - `created_at`: The date and time the record was created.
-  - `read_at`: The date and time the push message history was read.
+- `id`: Primary Key.
+- `hub_push_message_content_id`: [hub_push_message_contents.id](#hub_push_message_contents) of the attributed push message content
+- `source_id`: The ID of the source record that generated the push message.
+- `hub_customer_receiver_id`: [hub_customers.id](#hub_customers) of customers who will receive push messages
+- `hub_customer_reader_id`: [hub_customers.id](#hub_customers) of customers who received and read the push message
+- `variables`
+  > Bound variable JSON (type `Record<string, string>`)
+  >
+  > Encrypted because it may contain personal information.
+- `created_at`: The date and time the record was created.
+- `read_at`: The date and time the push message history was read.
 
 
 ## Account
@@ -3319,6 +3398,17 @@ erDiagram
   String hub_member_id FK
   String role
   DateTime created_at
+}
+"studio_account_llm_keys" {
+  String id PK
+  String studio_account_id FK
+  String hub_customer_id FK
+  String hub_member_id FK
+  String code
+  String provider
+  String value
+  DateTime created_at
+  DateTime updated_at
 }
 "studio_account_secrets" {
   String id PK
@@ -3430,6 +3520,7 @@ erDiagram
 "studio_enterprise_team_companions" }o--|| "studio_enterprise_teams" : team
 "studio_enterprise_team_companions" }o--|| "studio_enterprise_employees" : employee
 "studio_enterprise_team_companion_appointments" }|--|| "studio_enterprise_team_companions" : companion
+"studio_account_llm_keys" }o--|| "studio_accounts" : account
 "studio_account_secrets" }o--|| "studio_accounts" : account
 "studio_account_secret_values" }o--|| "studio_account_secrets" : secret
 "studio_account_secret_value_scopes" }o--|| "studio_account_secret_values" : secretValue
@@ -3449,58 +3540,58 @@ erDiagram
 ### `studio_accounts`
 Account entity.
 
-`studio_accounts` is an entity that represents an account in the studio system. 
-An account is a single entity with a unique identifier code, and can own 
-[repositories](#studio_repositories). For example, if the address of a 
-specific repository in GitHub is https://github.com/samchon/typia, then `samchon` 
+`studio_accounts` is an entity that represents an account in the studio system.
+An account is a single entity with a unique identifier code, and can own
+[repositories](#studio_repositories). For example, if the address of a
+specific repository in GitHub is https://github.com/samchon/typia, then `samchon`
 is the identifier of the account and the owner of the repository called `typia`.
 
 And the account referred to here does not necessarily refer to a person.
-The account owner may be a [member](#hub_members), but it may also be a 
+The account owner may be a [member](#hub_members), but it may also be a
 [company](#studio_enterprises). For example, in the case of
 https://github.com/Microsoft/TypeScript, the account owner is not a person, but
 Microsoft, a company.
 
-In addition, an account can change its owner. And when the owner changes, 
-the subject can also change from an individual to a company. For example, if 
-an account and repository that started as an individual becomes successful and 
+In addition, an account can change its owner. And when the owner changes,
+the subject can also change from an individual to a company. For example, if
+an account and repository that started as an individual becomes successful and
 is later promoted to a company, this is the case.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel
-  - `hub_member_id`: Account holder member's [hub_members.id](#hub_members) ID.
-  - `studio_enterprise_id`: Account holder company ID [studio_enterprises.id](#studio_enterprises).
-  - `code`
-    > Identifier code.
-    > 
-    > In the service, the part corresponding to a part of the URL address path.
-  - `created_at`: Account creation date and time.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel
+- `hub_member_id`: Account holder member's [hub_members.id](#hub_members) ID.
+- `studio_enterprise_id`: Account holder company ID [studio_enterprises.id](#studio_enterprises).
+- `code`
+  > Identifier code.
+  >
+  > In the service, the part corresponding to a part of the URL address path.
+- `created_at`: Account creation date and time.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_enterprises`
 Corporate entity.
 
-`studio_enterprises` is an entity that represents a company, and literally 
-means a subject participating in the studio system as a company unit. In the 
-case of a company, unlike [members](#hub_members), it must have a 
+`studio_enterprises` is an entity that represents a company, and literally
+means a subject participating in the studio system as a company unit. In the
+case of a company, unlike [members](#hub_members), it must have a
 [account](#studio_accounts).
 
-In addition, a company has [employees](#studio_enterprise_employees) 
-as sub-entities, and [teams](#studio_enterprise_teams) composed of them. 
-And among these, the [members](#studio_enterprise_team_companions) of 
-the team can have the same [access rights](#studio_repository_accesses) 
+In addition, a company has [employees](#studio_enterprise_employees)
+as sub-entities, and [teams](#studio_enterprise_teams) composed of them.
+And among these, the [members](#studio_enterprise_team_companions) of
+the team can have the same [access rights](#studio_repository_accesses)
 of the [repository](#studio_repositories) belonging to the company.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the business
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `name`: Company name.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time of record edit.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliate channel
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the business
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `name`: Company name.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time of record edit.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_enterprise_employees`
 Employee entity within a company.
@@ -3517,20 +3608,20 @@ in this studio system can be
 for one person to belong to multiple companies as an employee at the same time.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_enterprise_id`: [studio_enterprises.id](#studio_enterprises) of the affiliated company
-  - `hub_member_id`: Members of the target staff [hub_members.id](#hub_members)
-  - `title`
-    > Positions.
-    > 
-    > - `owner`: Owner of the company. Has all privileges
-    > - `manager`: Manager of the company, has privileges for general members
-    > - `member`: General members
-    > - `observer`: Observer, read-only
-  - `created_at`: Date and time of first invitation to employees.
-  - `updated_at`: Date and time the record was modified.
-  - `approved_at`: Date and time of acceptance of employee invitation.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_enterprise_id`: [studio_enterprises.id](#studio_enterprises) of the affiliated company
+- `hub_member_id`: Members of the target staff [hub_members.id](#hub_members)
+- `title`
+  > Positions.
+  >
+  > - `owner`: Owner of the company. Has all privileges
+  > - `manager`: Manager of the company, has privileges for general members
+  > - `member`: General members
+  > - `observer`: Observer, read-only
+- `created_at`: Date and time of first invitation to employees.
+- `updated_at`: Date and time the record was modified.
+- `approved_at`: Date and time of acceptance of employee invitation.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_enterprise_employee_appointments`
 Employee appointment information.
@@ -3544,14 +3635,14 @@ Therefore, this entity record is created once when a company appoints
 an employee, and is accumulated whenever the employee's position is changed.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_enterprise_employee_id`: Target Employee's [studio_enterprise_employees.id](#studio_enterprise_employees)
-  - `hub_customer_id`
-    > [hub_customers.id](#hub_customers) of customers who have appointed or changed
-    > employees' positions
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `title`: The position given.
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `studio_enterprise_employee_id`: Target Employee's [studio_enterprise_employees.id](#studio_enterprise_employees)
+- `hub_customer_id`
+  > [hub_customers.id](#hub_customers) of customers who have appointed or changed
+  > employees' positions
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `title`: The position given.
+- `created_at`: The date and time the record was created.
 
 ### `studio_enterprise_teams`
 Team information within the company.
@@ -3565,18 +3656,18 @@ A team is a [member](#studio_enterprise_team_companions), and has
 [repository](#studio_repositories) as a team unit.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_enterprise_id`: [studio_enterprises.id](#studio_enterprises) of the affiliated company
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the team
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `code`
-    > The team identifier code.
-    > 
-    > Part of the path in the URL address of the team page.
-  - `name`: Team name.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_enterprise_id`: [studio_enterprises.id](#studio_enterprises) of the affiliated company
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the team
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `code`
+  > The team identifier code.
+  >
+  > Part of the path in the URL address of the team page.
+- `name`: Team name.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_enterprise_team_companions`
 Information about the members of a team within a company.
@@ -3594,19 +3685,19 @@ This is similar to how one [member](#hub_members) could be appointed as
 an employee to multiple companies at the same time.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_enterprise_team_id`: [studio_enterprise_teams.id](#studio_enterprise_teams) of the affiliated team
-  - `studio_enterprise_employee_id`: Target Employee's [studio_enterprise_employees.id](#studio_enterprise_employees)
-  - `role`
-    > Assigned roles.
-    > 
-    > - `chief`: team leader
-    > - `manager`: manager, has authority over general members
-    > - `member`: general member
-    > - `observer`: observer, can only read
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_enterprise_team_id`: [studio_enterprise_teams.id](#studio_enterprise_teams) of the affiliated team
+- `studio_enterprise_employee_id`: Target Employee's [studio_enterprise_employees.id](#studio_enterprise_employees)
+- `role`
+  > Assigned roles.
+  >
+  > - `chief`: team leader
+  > - `manager`: manager, has authority over general members
+  > - `member`: general member
+  > - `observer`: observer, can only read
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_enterprise_team_companion_appointments`
 Appointment information for team members within the company.
@@ -3619,141 +3710,159 @@ Therefore, this entity record is first created when a team appoints a member,
 and is accumulated whenever the member's role changes.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_enterprise_team_companion_id`: [studio_enterprise_team_companions.id](#studio_enterprise_team_companions) of the target team member
-  - `hub_customer_id`
-    > Customers who have assigned or changed roles for team members
-    > [hub_customers.id](#hub_customers)
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `role`: The role assigned.
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `studio_enterprise_team_companion_id`: [studio_enterprise_team_companions.id](#studio_enterprise_team_companions) of the target team member
+- `hub_customer_id`
+  > Customers who have assigned or changed roles for team members
+  > [hub_customers.id](#hub_customers)
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `role`: The role assigned.
+- `created_at`: The date and time the record was created.
+
+### `studio_account_llm_keys`
+API key of LLM providers.
+
+`studio_account_llm_keys` is an entity storing the API key of LLM
+providers like "OpenAI" and "Anthropic" to be used in the
+[studio account](#studio_accounts) level.
+
+**Properties**
+- `id`: Primary Key.
+- `studio_account_id`: Belonged account's [studio_accounts.id](#studio_accounts)
+- `hub_customer_id`: Customer's [hub_customers.id](#hub_customers) who've created the key.
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `code`: Identifier code in the belonged account.
+- `provider`: Provider name like openai, anthropic.
+- `value`: API key value.
+- `created_at`: Creation time of the record.
+- `updated_at`: Modification time of the record.
 
 ### `studio_account_secrets`
 Secret variable set information registered to the studio account.
 
-`studio_account_secrets` is an entity that visualizes a set of secret 
-variables registered to [studio account](#studio_accounts). It is a concept 
-that collects multiple [variable values](#studio_account_secret_values) for 
-one secret key. And the secret variable referred to here refers to 
+`studio_account_secrets` is an entity that visualizes a set of secret
+variables registered to [studio account](#studio_accounts). It is a concept
+that collects multiple [variable values](#studio_account_secret_values) for
+one secret key. And the secret variable referred to here refers to
 authentication keys or passwords used for linking with other applications.
 
-For reference, the main purpose of the secret variable is to be used as a 
-parameter or some property inserted into a connector or workflow function 
+For reference, the main purpose of the secret variable is to be used as a
+parameter or some property inserted into a connector or workflow function
 within the [workflow program](#studio_repository_workflow_snapshots).
 
-It is identified through `IAstWorkflowSecretIdentifier` on the AST expression 
+It is identified through `IAstWorkflowSecretIdentifier` on the AST expression
 node, and is mainly used to store authentication keys such as Google or Facebook.
 
 And for this purpose, the variable value is encrypted and stored in the DB.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_id`: [studio_accounts.id](#studio_accounts) of the account you are affiliated with
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the variable
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `key`: Variable key.
-  - `title`: title.
-  - `description`: Descriptive text.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time of record edit.
+- `id`: Primary Key.
+- `studio_account_id`: [studio_accounts.id](#studio_accounts) of the account you are affiliated with
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the variable
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `key`: Variable key.
+- `title`: title.
+- `description`: Descriptive text.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time of record edit.
 
 ### `studio_account_secret_values`
 Global variable value information registered in the studio account.
 
-`studio_account_secret_values` is an entity that visualizes the individual 
-values of the [secret variable set](#studio_account_secrets) registered 
+`studio_account_secret_values` is an entity that visualizes the individual
+values of the [secret variable set](#studio_account_secrets) registered
 in the [studio account](#studio_accounts).
 
-And the secret variable referred to here refers to authentication keys or 
-passwords used for linking with other applications. For reference, the main 
-purpose of the secret variable is to be used as a parameter or some property 
-inserted into a connector or workflow function within the 
+And the secret variable referred to here refers to authentication keys or
+passwords used for linking with other applications. For reference, the main
+purpose of the secret variable is to be used as a parameter or some property
+inserted into a connector or workflow function within the
 [workflow program](#studio_repository_workflow_snapshots).
 
-It is identified through `IAstWorkflowSecretIdentifier` on the AST expression 
+It is identified through `IAstWorkflowSecretIdentifier` on the AST expression
 node, and is mainly used to store authentication keys such as Google or Facebook.
 
 And for this purpose, the variable value is encrypted and stored in the DB.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_secret_id`: [studio_account_secrets.id](#studio_account_secrets) of the set of attribution secret variables
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer registering the record
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `code`
-    > Identifier code.
-    > 
-    > Usually used are account emails or IDs of linked target services.
-  - `value`: Variable value.
-  - `sequence`: Batch order.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `expired_at`: Record expiration date and time.
+- `id`: Primary Key.
+- `studio_account_secret_id`: [studio_account_secrets.id](#studio_account_secrets) of the set of attribution secret variables
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer registering the record
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `code`
+  > Identifier code.
+  >
+  > Usually used are account emails or IDs of linked target services.
+- `value`: Variable value.
+- `sequence`: Batch order.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `expired_at`: Record expiration date and time.
 
 ### `studio_account_secret_value_scopes`
 Scope for the secret global variable value of the studio account.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_secret_value_id`: [studio_account_secret_values.id](#studio_account_secret_values) of the attribute secret variable value
-  - `value`: Scope value.
-  - `sequence`: Batch order.
+- `id`: Primary Key.
+- `studio_account_secret_value_id`: [studio_account_secret_values.id](#studio_account_secret_values) of the attribute secret variable value
+- `value`: Scope value.
+- `sequence`: Batch order.
 
 ### `studio_account_schedules`
 Schedule information set in the studio account.
 
-`studio_account_schedules` is an entity that visualizes the schedule 
-information set in [studio account](#studio_accounts). And the schedule 
-here refers to [release nodes](#studio_repository_release_nodes) 
+`studio_account_schedules` is an entity that visualizes the schedule
+information set in [studio account](#studio_accounts). And the schedule
+here refers to [release nodes](#studio_repository_release_nodes)
 that are repeatedly executed based on a certain cycle.
 
-For reference, the target release node must be of type 
-[workflow](#studio_repository_workflow_snapshots), and the belonging 
+For reference, the target release node must be of type
+[workflow](#studio_repository_workflow_snapshots), and the belonging
 [release](#studio_repository_releases) can be an old version.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_id`: [studio_accounts.id](#studio_accounts) of the account you are affiliated with
-  - `studio_repository_release_node_id`: [studio_release_nodes.id](#studio_release_nodes) of the release node to run on
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the schedule
-  - `arguments`
-    > A list of argument values to be entered for the parameter.
-    > 
-    > Encrypted because it may contain personal information.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_account_id`: [studio_accounts.id](#studio_accounts) of the account you are affiliated with
+- `studio_repository_release_node_id`: [studio_release_nodes.id](#studio_release_nodes) of the release node to run on
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the schedule
+- `arguments`
+  > A list of argument values to be entered for the parameter.
+  >
+  > Encrypted because it may contain personal information.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_account_schedule_of_goods`
 Schedule information for ordered items set in your studio account.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods)
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the affiliated unit
+- `id`: Primary Key.
+- `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods)
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the affiliated unit
 
 ### `studio_account_schedule_intervals`
 Execution interval information for scheduling information set in the studio account.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_schedule_id`: The id of the target scheduler information.
-  - `duration`: Scheduler execution interval information.
-  - `started_at`: The first start time of the schedule.
-  - `paused_at`: Suspend time.
-  - `closed_at`: Schedule interruption date.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_account_schedule_id`: The id of the target scheduler information.
+- `duration`: Scheduler execution interval information.
+- `started_at`: The first start time of the schedule.
+- `paused_at`: Suspend time.
+- `closed_at`: Schedule interruption date.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_account_widgets`
 Studio Widget.
 
-In the studio, each [account](#studio_accounts) can create widgets 
-according to their purpose, and place [tiles](#studio_account_widget_tiles) 
+In the studio, each [account](#studio_accounts) can create widgets
+according to their purpose, and place [tiles](#studio_account_widget_tiles)
 linked to [release nodes](#studio_repository_release_nodes) in various ways.
 
-The codes for the currently supported widgets are as follows, but may change 
+The codes for the currently supported widgets are as follows, but may change
 in the future.
 
 - general
@@ -3761,86 +3870,86 @@ in the future.
 - mobile
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_id`: [studio_accounts.id](#studio_accounts) of the account you are affiliated with
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the widget
-  - `code`
-    > Widget code.
-    > 
-    > The following codes are currently used as fixed codes, but are not yet confirmed.
-    > 
-    > - general
-    > - desktop
-    > - mobile
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_account_id`: [studio_accounts.id](#studio_accounts) of the account you are affiliated with
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the widget
+- `code`
+  > Widget code.
+  >
+  > The following codes are currently used as fixed codes, but are not yet confirmed.
+  >
+  > - general
+  > - desktop
+  > - mobile
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_account_widget_tiles`
 Studio's widget tiles.
 
-`studio_account_widget_tiles` is an entity that visualizes individual 
-tiles that are placed in the [widget](#studio_account_widgets) that can 
+`studio_account_widget_tiles` is an entity that visualizes individual
+tiles that are placed in the [widget](#studio_account_widgets) that can
 be configured for each [account](#studio_accounts) in the studio.
 
-When creating a widget record, you can place it by specifying a 
-[release node](#studio_repository_release_nodes) or an entity record 
-related to it, and when reading it in the application, the most successful 
-return value among the 
-[function call history](#studio_repository_release_node_histories) of the 
+When creating a widget record, you can place it by specifying a
+[release node](#studio_repository_release_nodes) or an entity record
+related to it, and when reading it in the application, the most successful
+return value among the
+[function call history](#studio_repository_release_node_histories) of the
 release node linked to the target entity is used.
 
 - [studio_repository_release_node_histories](#studio_repository_release_node_histories)
 - [studio_account_schedules](#studio_account_schedules)
 
-In addition, each widget tile has its own geometry system, and therefore 
-the API pagination also has a unique characteristic that is performed 
+In addition, each widget tile has its own geometry system, and therefore
+the API pagination also has a unique characteristic that is performed
 according to the geometry coordinates and size area.
 
-In addition, the placement coordinates can be changed at any time by the API 
-push function, even if you do not change them by directly specifying a 
-specific widget. The push (bash) mentioned here means that when placing 
-a new tile (or moving an existing tile), the overlapping tile is pushed to 
-the bottom (Y axis). Of course, it is also possible for other tiles to be 
+In addition, the placement coordinates can be changed at any time by the API
+push function, even if you do not change them by directly specifying a
+specific widget. The push (bash) mentioned here means that when placing
+a new tile (or moving an existing tile), the overlapping tile is pushed to
+the bottom (Y axis). Of course, it is also possible for other tiles to be
 pushed in a chain by the pushed tile.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_widget_id`: [studio_account_widgets.id](#studio_account_widgets) of the attributed widget
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the tile
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time of coordinate/size modification.
-  - `deleted_at`: Date and time of record deletion.
+- `id`: Primary Key.
+- `studio_account_widget_id`: [studio_account_widgets.id](#studio_account_widgets) of the attributed widget
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who created the tile
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time of coordinate/size modification.
+- `deleted_at`: Date and time of record deletion.
 
 ### `studio_account_widget_tile_components`
 Elements placed on the Studio widget tile.
 
-`studio_account_widget_tile_components` is an entity that visualizes the 
+`studio_account_widget_tile_components` is an entity that visualizes the
 components placed on the Studio's [widget tile](#studio_widget_tiles).
 
-And each widget tile can place [release nodes](#studio_repository_release_nodes) 
+And each widget tile can place [release nodes](#studio_repository_release_nodes)
 and [schedule routines](#studio_account_schedules) or
 [workflows in progress](#studio_repository_buckets),
-which are divided into subtype entities according to their type with the `kind` 
+which are divided into subtype entities according to their type with the `kind`
 property as a discriminator.
 
 - `release-node`: [studio_account_widget_tile_component_of_release_nodes](#studio_account_widget_tile_component_of_release_nodes)
-- `release-node-agent`: [studio_account_widget_tile_component_of_release_nodes](#studio_account_widget_tile_component_of_release_nodes) 
-- `schedule`: [studio_account_widget_tile_component_of_schedules](#studio_account_widget_tile_component_of_schedules) 
-- `workflow`: [tile_component_of_workflows](#studio_account_widget_) 
+- `release-node-agent`: [studio_account_widget_tile_component_of_release_nodes](#studio_account_widget_tile_component_of_release_nodes)
+- `schedule`: [studio_account_widget_tile_component_of_schedules](#studio_account_widget_tile_component_of_schedules)
+- `workflow`: [tile_component_of_workflows](#studio_account_widget_)
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_widget_tile_id`: [studio_repository_widget_tiles.id](#studio_repository_widget_tiles) of the attributed widget tiles
-  - `kind`
-    > Type of component.
-    > 
-    > Discriminator for the type of component placed on the widget tile.
-    > 
-    > - chatbot: when the workflow is used as a chat agent
-    > - routine: when the schedule routine is placed as a component
-    > - general: general workflow
-    > - snapshot: snapshot of the workflow in progress
+- `id`: Primary Key.
+- `studio_account_widget_tile_id`: [studio_repository_widget_tiles.id](#studio_repository_widget_tiles) of the attributed widget tiles
+- `kind`
+  > Type of component.
+  >
+  > Discriminator for the type of component placed on the widget tile.
+  >
+  > - chatbot: when the workflow is used as a chat agent
+  > - routine: when the schedule routine is placed as a component
+  > - general: general workflow
+  > - snapshot: snapshot of the workflow in progress
 
 ### `studio_account_widget_tile_component_of_release_nodes`
 Release node information placed on the studio widget tile.
@@ -3848,83 +3957,83 @@ Release node information placed on the studio widget tile.
 `studio_account_widget_tile_component_of_release_nodes` is a subtype entity of
 [studio_account_widget_tile_components](#studio_account_widget_tile_components),
 and is an entity that represents
-[release nodes](#studio_repository_release_nodes) placed on the studio's 
+[release nodes](#studio_repository_release_nodes) placed on the studio's
 [widget tile](#studio_account_widget_tiles).
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_repository_release_node_id`
-    > [studio_repository_release_nodes.id](#studio_repository_release_nodes) of the release nodes placed 
-    > on the tile
-  - `arguments`
-    > A list of arguments to use when executing the release node function.
-    > 
-    > Encrypted because it may contain personal information.
+- `id`: Primary Key.
+- `studio_repository_release_node_id`
+  > [studio_repository_release_nodes.id](#studio_repository_release_nodes) of the release nodes placed
+  > on the tile
+- `arguments`
+  > A list of arguments to use when executing the release node function.
+  >
+  > Encrypted because it may contain personal information.
 
 ### `studio_account_widget_tile_component_of_schedules`
 Schedule information placed on the studio widget tile.
 
 `studio_account_widget_tile_component_of_schedules` is a subtype entity of
 [studio_account_widget_tile_components](#studio_account_widget_tile_components), and is an entity that visualizes
-[schedules](#studio_account_schedules) placed on the studio's 
+[schedules](#studio_account_schedules) placed on the studio's
 [widget tile](#studio_account_widget_tiles).
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_schedule_id`: [studio_account_schedules.id](#studio_account_schedules) of the schedules placed on the tile
+- `id`: Primary Key.
+- `studio_account_schedule_id`: [studio_account_schedules.id](#studio_account_schedules) of the schedules placed on the tile
 
 ### `studio_account_widget_tile_component_of_workflows`
 Workflow information in progress placed on the Studio widget tile.
 
 `studio_account_widget_tile_component_of_workflows` is a subtype entity of
-[studio_account_widget_tile_components](#studio_account_widget_tile_components), which is an entity that 
-visualizes [Workflows in Progress](#studio_repository_buckets) placed 
+[studio_account_widget_tile_components](#studio_account_widget_tile_components), which is an entity that
+visualizes [Workflows in Progress](#studio_repository_buckets) placed
 on the Studio's [widget tile](#studio_account_widget_tiles).
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_repository_workflow_id`
-    > [studio_repository_workflow_snapshots.id](#studio_repository_workflow_snapshots) of the workflow you're 
-    > working on, placed on the tile.
-  - `arguments`
-    > List of arguments.
-    > 
-    > A list of arguments to use when executing the workflow function being worked on.
-    > 
-    > Encrypted because it may contain personal information.
+- `id`: Primary Key.
+- `studio_repository_workflow_id`
+  > [studio_repository_workflow_snapshots.id](#studio_repository_workflow_snapshots) of the workflow you're
+  > working on, placed on the tile.
+- `arguments`
+  > List of arguments.
+  >
+  > A list of arguments to use when executing the workflow function being worked on.
+  >
+  > Encrypted because it may contain personal information.
 
 ### `studio_account_widget_tile_geometries`
 Widget tile breakpoint-specific layout information.
 
-`studio_account_widget_tile_geometries` is an entity that visualizes 
-layout information for each breakpoint of the 
+`studio_account_widget_tile_geometries` is an entity that visualizes
+layout information for each breakpoint of the
 [widget tile](#studio_account_widget_tile).
 
 And the breakpoints mentioned here mean breakpoints based on the responsive UI.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_widget_tile_id`: [studio_repository_widget_tiles.id](#studio_repository_widget_tiles) of the attributed widget tile
-  - `breakpoint`
-    > Breakpoints based on responsive UI.
-    > 
-    > - xs: 1 space
-    > - sm: 2 spaces
-    > - md: 4 spaces
-    > - lg: 4 spaces
-  - `position_x`: X-axis coordinate.
-  - `position_y`: Y-axis coordinate.
-  - `scale_x`: X-axis size.
-  - `scale_y`: Y axis size.
-  - `edge_x`: 
-  - `edge_y`: 
-  - `pinned`
-    > Whether to fix the coordinates.
-    > 
-    > If this property value is set to `true` and the target tile's coordinates 
-    > are fixed, it will not be affected by future pushing of other tiles.
-    > 
-    > This means that the coordinates are completely fixed.
+- `id`: Primary Key.
+- `studio_account_widget_tile_id`: [studio_repository_widget_tiles.id](#studio_repository_widget_tiles) of the attributed widget tile
+- `breakpoint`
+  > Breakpoints based on responsive UI.
+  >
+  > - xs: 1 space
+  > - sm: 2 spaces
+  > - md: 4 spaces
+  > - lg: 4 spaces
+- `position_x`: X-axis coordinate.
+- `position_y`: Y-axis coordinate.
+- `scale_x`: X-axis size.
+- `scale_y`: Y axis size.
+- `edge_x`:
+- `edge_y`:
+- `pinned`
+  > Whether to fix the coordinates.
+  >
+  > If this property value is set to `true` and the target tile's coordinates
+  > are fixed, it will not be affected by future pushing of other tiles.
+  >
+  > This means that the coordinates are completely fixed.
 
 
 ## Meta
@@ -3953,11 +4062,10 @@ erDiagram
   String id PK
   String studio_meta_chat_session_connection_id FK
   String speaker
-  String type
-  String arguments
-  String value "nullable"
+  String kind "nullable"
+  String data
   DateTime created_at
-  DateTime completed_at
+  DateTime completed_at "nullable"
 }
 "studio_meta_chat_session_shares" {
   String id PK
@@ -3986,35 +4094,35 @@ erDiagram
 ### `studio_meta_chat_sessions`
 Meta LLM chat session information.
 
-`studio_meta_chat_sessions` is an entity that visualizes Meta LLM chat sessions 
+`studio_meta_chat_sessions` is an entity that visualizes Meta LLM chat sessions
 and their history.
 
-Therefore, `studio_meta_chat_sessions` contains the most basic information of 
-the chat session, such as the [initiator customer](#hub_customers) and the 
+Therefore, `studio_meta_chat_sessions` contains the most basic information of
+the chat session, such as the [initiator customer](#hub_customers) and the
 time, and the sub-entities [studio_meta_chat_session_connections](#studio_meta_chat_session_connections) and
-[studio_meta_chat_session_connection_messages](#studio_meta_chat_session_connection_messages) contain the session 
+[studio_meta_chat_session_connection_messages](#studio_meta_chat_session_connection_messages) contain the session
 connection information and the history of mutually transmitted messages.
 
-For reference, our Meta LLM chat session uses the WebSocket protocol and the 
-RPC (Remote Procedure Call) concept of 
+For reference, our Meta LLM chat session uses the WebSocket protocol and the
+RPC (Remote Procedure Call) concept of
 [TGrid](https://tgrid.com/docs/remote-procedure-call/). Therefore, the sub-entity
-[studio_meta_chat_session_connections](#studio_meta_chat_session_connections) records the client's 
-connection/disconnection information to the websocket server, and 
-[studio_meta_chat_session_connection_messages](#studio_meta_chat_session_connection_messages) records the RPC function 
+[studio_meta_chat_session_connections](#studio_meta_chat_session_connections) records the client's
+connection/disconnection information to the websocket server, and
+[studio_meta_chat_session_connection_messages](#studio_meta_chat_session_connection_messages) records the RPC function
 calls and return history between the server and client.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who opened the chat session
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `title`
-    > Chat session title.
-    > 
-    > Elements that can be set later.
-  - `created_at`: The date and time the record was created.
-  - `updated_at`: Date and time the record was modified.
-  - `deleted_at`: Date and time of record deletion.
-  - `pinned_at`: Top fixed date and time.
+- `id`: Primary Key.
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who opened the chat session
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `title`
+  > Chat session title.
+  >
+  > Elements that can be set later.
+- `created_at`: The date and time the record was created.
+- `updated_at`: Date and time the record was modified.
+- `deleted_at`: Date and time of record deletion.
+- `pinned_at`: Top fixed date and time.
 
 ### `studio_meta_chat_session_connections`
 Connection information to Meta LLM chat sessions.
@@ -4029,13 +4137,13 @@ for that session, and when a customer disconnects the WebSocket connection,
 the time is recorded in `disconnected_at`.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_meta_chat_session_id`: [studio_meta_chat_sessions.id](#studio_meta_chat_sessions) of the attached chat session
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who connected to the chat session
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `connected_at`: Connection time.
-  - `survived_at`: Time of survival confirmation.
-  - `disconnected_at`: Disconnection time.
+- `id`: Primary Key.
+- `studio_meta_chat_session_id`: [studio_meta_chat_sessions.id](#studio_meta_chat_sessions) of the attached chat session
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the customer who connected to the chat session
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `connected_at`: Connection time.
+- `survived_at`: Time of survival confirmation.
+- `disconnected_at`: Disconnection time.
 
 ### `studio_meta_chat_session_connection_messages`
 Speech data during a Meta LLM chat session connection.
@@ -4053,46 +4161,47 @@ is also an entity that encompasses the history information `data` for RPC
 function calls.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_meta_chat_session_connection_id`: [studio_meta_chat_session_connections.id](#studio_meta_chat_session_connections)
-  - `speaker`
-    > Who is the speaker?
-    > 
-    > - customer: customer (human)
-    > - agent: LLM agent (robot)
-  - `type`: Discriminator type.
-  - `arguments`
-    > Arguments of RPC.
-    > 
-    > Encrypted due to personal information reason.
-  - `value`
-    > Return value of error data.
-    > 
-    > Encrypted due to personal information reason.
-  - `created_at`: Time of ignition.
-  - `completed_at`: Completion time of RPC.
+- `id`: Primary Key.
+- `studio_meta_chat_session_connection_id`: [studio_meta_chat_session_connections.id](#studio_meta_chat_session_connections)
+- `speaker`
+  > Who is the speaker?
+  >
+  > - customer: customer (human)
+  > - agent: LLM agent (robot)
+- `kind`: Kind of the message.
+- `data`
+  > Detailed data.
+  >
+  > Detailed data of the message, or in other words, detailed history information
+  > about the RPC function call.
+  >
+  > For more information, see `IStudioMetaChatSessionMessageData` on the DTO.
+  >
+  > Encrypted because it may contain personal information.
+- `created_at`: Time of ignition.
+- `completed_at`: Return time after receiving the message from the other party.
 
 ### `studio_meta_chat_session_shares`
 Sharing of Meta LLM chat sessions.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) who've shared the chat session.
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `studio_meta_chat_session_id`: [studio_meta_chat_sessions.id](#studio_meta_chat_sessions) of the chat session shared.
-  - `studio_meta_chat_session_connection_message_id`
-    > [studio_meta_chat_session_connection_messages.id](#studio_meta_chat_session_connection_messages) of the message shared.
-    > 
-    > If you specify the message, the chat session will be shared to that message.
-  - `title`: Title of the shared chat session.
-  - `created_at`: Time of sharing record creation.
-  - `updated_at`: Time of sharing record modification.
-  - `deleted_at`: Time of deletion.
+- `id`: Primary Key.
+- `hub_customer_id`: [hub_customers.id](#hub_customers) who've shared the chat session.
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `studio_meta_chat_session_id`: [studio_meta_chat_sessions.id](#studio_meta_chat_sessions) of the chat session shared.
+- `studio_meta_chat_session_connection_message_id`
+  > [studio_meta_chat_session_connection_messages.id](#studio_meta_chat_session_connection_messages) of the message shared.
+  >
+  > If you specify the message, the chat session will be shared to that message.
+- `title`: Title of the shared chat session.
+- `created_at`: Time of sharing record creation.
+- `updated_at`: Time of sharing record modification.
+- `deleted_at`: Time of deletion.
 
 ### `studio_meta_chat_session_goods`
 The goods used in the chat session.
 
-The [studio_meta_chat_sessions](#studio_meta_chat_sessions) represents a super A.I. 
+The [studio_meta_chat_sessions](#studio_meta_chat_sessions) represents a super A.I.
 chatbot that performing the LLM (Large Language Model) function
 calling, and the functions to call are coming from the
 [hub_order_goods](#hub_order_goods). And this `studio_meta_chat_session_goods`
@@ -4103,10 +4212,10 @@ contract. If the contract is not valid or its period is expired,
 the session also be expired.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_meta_chat_session_id`: Belonged session's [studio_meta_chat_sessions.id](#studio_meta_chat_sessions)
-  - `hub_order_good_id`: Target good's [hub_order_goods.id](#hub_order_goods)
-  - `sequence`: Sequence of the good in the session.
+- `id`: Primary Key.
+- `studio_meta_chat_session_id`: Belonged session's [studio_meta_chat_sessions.id](#studio_meta_chat_sessions)
+- `hub_order_good_id`: Target good's [hub_order_goods.id](#hub_order_goods)
+- `sequence`: Sequence of the good in the session.
 
 
 ## External
@@ -4134,10 +4243,10 @@ URL Swagger Information.
 Table that stores URL Swagger Information.
 
 **Properties**
-  - `id`: Primary Key.
-  - `src_url`: Swagger URL.
-  - `version`: Swagger version.
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `src_url`: Swagger URL.
+- `version`: Swagger version.
+- `created_at`: The date and time the record was created.
 
 ### `hub_external_swagger_document_translates`
 URL Swagger Translation Information.
@@ -4145,11 +4254,11 @@ URL Swagger Translation Information.
 Table that stores URL Swagger Translation Information.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_external_swagger_document_id`: swagger의 [url_swagger.id](#url_swagger)
-  - `original`: Whether it's original swagger or not.
-  - `url`: Swagger's S3 URL.
-  - `lang_code`: Swagger language code.
+- `id`: Primary Key.
+- `hub_external_swagger_document_id`: swagger의 [url_swagger.id](#url_swagger)
+- `original`: Whether it's original swagger or not.
+- `url`: Swagger's S3 URL.
+- `lang_code`: Swagger language code.
 
 
 ## Applications
@@ -4157,53 +4266,99 @@ Table that stores URL Swagger Translation Information.
 erDiagram
 "studio_applications" {
   String id PK
-  String hub_section_id FK
   String hub_customer_id FK
   String hub_member_id FK
-  String type
-  String status
   DateTime created_at
+  DateTime deleted_at "nullable"
 }
 "studio_application_snapshots" {
   String id PK
   String studio_application_id FK
-  String name
-  String representative_image "nullable"
+  String version
+  String version_description "nullable"
   DateTime created_at
+  DateTime deleted_at "nullable"
+}
+"studio_application_snapshot_knowledge_files" {
+  String id PK
+  String studio_application_snapshot_id FK
+  String attachment_file_id FK
+  Int sequence
+}
+"studio_application_snapshot_contents" {
+  String id PK
+  String studio_application_snapshot_id FK
+  String title
+  String summary "nullable"
+  String format
+  String body
+}
+"studio_application_snapshot_content_thumbnails" {
+  String id PK
+  String studio_application_snapshot_content_id FK
+  String attachment_file_id FK
+  Int sequence
 }
 "studio_application_snapshot_prompts" {
   String id PK
   String studio_application_snapshot_id FK
-  String type
-  String subtype
-  String format
   String title
+  String system_prompt_type "nullable"
+  String format
   String body
-  Int sequence
 }
-"studio_system_prompt_files" {
+"studio_application_snapshot_prompt_files" {
   String id PK
   String studio_application_system_prompt_id FK
   String attachment_file_id FK
   Int sequence
 }
-"studio_application_swagger_accesses" {
+"studio_application_snapshot_swaggers" {
   String id PK
   String studio_application_snapshot_id FK
+  String hub_order_good_id FK "nullable"
   String hub_sale_snapshot_unit_id FK
+  String attachment_file_id FK "nullable"
 }
-"studio_application_snapshot_user_prompts" {
+"studio_application_snapshot_user_prompt_chips" {
   String id PK
-  String icon_url "nullable"
   String studio_application_snapshot_id FK
+  String icon_url "nullable"
+  String value
   Int sequence
 }
-"studio_application_snapshot_user_prompt_translates" {
+"studio_application_releases" {
   String id PK
-  String studio_application_snapshot_user_prompt_id FK
+  String hub_customer_id FK
+  String hub_member_id FK
+  String studio_application_snapshot_id FK
+  String version
+  DateTime created_at
+  DateTime closed_at "nullable"
+}
+"studio_application_releases_llm_key" {
+  String id PK
+  String studio_application_release_id FK
+  String hub_customer_id FK
+  String hub_member_id FK
+  String code
+  String provider
   String value
-  Boolean original
-  String lang_code "nullable"
+  DateTime created_at
+  DateTime updated_at
+}
+"studio_application_release_documents" {
+  String id PK
+  String studio_application_release_id FK
+  String title
+  String format
+  String body
+}
+"studio_application_release_document_files" {
+  String id PK
+  String studio_application_release_document_id FK
+  String attachment_file_id FK
+  Int sequence
 }
 "hub_sale_snapshot_units" {
   String id PK
@@ -4220,13 +4375,19 @@ erDiagram
   String host_real
   String host_dev "nullable"
 }
-"studio_application_snapshots" }o--|| "studio_applications" : application
-"studio_application_snapshot_prompts" }o--|| "studio_application_snapshots" : application_snapshot
-"studio_system_prompt_files" }o--|| "studio_application_snapshot_prompts" : system_prompt
-"studio_application_swagger_accesses" }o--|| "studio_application_snapshots" : application_snapshots
-"studio_application_swagger_accesses" }o--|| "hub_sale_snapshot_units" : sale_snapshot_units
-"studio_application_snapshot_user_prompts" }o--|| "studio_application_snapshots" : application_snapshots
-"studio_application_snapshot_user_prompt_translates" }o--|| "studio_application_snapshot_user_prompts" : application_snapshot_user_prompts
+"studio_application_snapshots" }|--|| "studio_applications" : application
+"studio_application_snapshot_knowledge_files" }o--|| "studio_application_snapshots" : snapshot
+"studio_application_snapshot_contents" |o--|| "studio_application_snapshots" : snapshot
+"studio_application_snapshot_content_thumbnails" }o--|| "studio_application_snapshot_contents" : content
+"studio_application_snapshot_prompts" }o--|| "studio_application_snapshots" : snapshot
+"studio_application_snapshot_prompt_files" }o--|| "studio_application_snapshot_prompts" : system_prompt
+"studio_application_snapshot_swaggers" }o--|| "studio_application_snapshots" : snapshot
+"studio_application_snapshot_swaggers" }o--|| "hub_sale_snapshot_units" : unit
+"studio_application_snapshot_user_prompt_chips" }o--|| "studio_application_snapshots" : snapshot
+"studio_application_releases" |o--|| "studio_application_snapshots" : snapshot
+"studio_application_releases_llm_key" }|--|| "studio_application_releases" : release
+"studio_application_release_documents" |o--|| "studio_application_releases" : release
+"studio_application_release_document_files" }o--|| "studio_application_release_documents" : document
 "hub_sale_snapshot_unit_swaggers" |o--|| "hub_sale_snapshot_units" : unit
 ```
 
@@ -4239,139 +4400,252 @@ The customer may subscribe to an `studio_applications` created by another person
 or create a chat session using an `studio_applications` created by the user.
 
 **Properties**
-  - `id`: Primary Key.
-  - `hub_section_id`: [hub_sections.id](#hub_sections) in the attributed section
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `type`
-    > Type of application
-    > 
-    > It can be only 'public', 'private', 'protected'.
-  - `status`
-    > Application status, pending
-    > 
-    > It can be 'temp', 'pending', 'approved'.
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `created_at`: The date and time the record was created.
+- `deleted_at`: The date and time the record was deleted.
 
 ### `studio_application_snapshots`
 Listing snapshot information.
 
-`studio_application_snapshots` is an entity that represents snapshots of 
-[listings](#studio_applications). And `studio_application_snapshots` records are created 
+`studio_application_snapshots` is an entity that represents snapshots of
+[listings](#studio_applications). And `studio_application_snapshots` records are created
 whenever a new listing is created or an existing listing is modified.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_application_id`: [studio_applications.id](#studio_applications) of the property
-  - `name`: application name
-  - `representative_image`: application representative image
-  - `created_at`: The date and time the record was created.
+- `id`: Primary Key.
+- `studio_application_id`: [studio_applications.id](#studio_applications) of the property
+- `version`: Version
+- `version_description`
+  > Version Description.
+  >
+  > You can record information about the version description.
+- `created_at`: The date and time the record was created.
+- `deleted_at`: The date and time the record was deleted.
+
+### `studio_application_snapshot_knowledge_files`
+Application snapshot files
+
+This model stores files that are uploaded to train or enhance the agent associated
+with an application snapshot. These files serve as knowledge sources for the agent,
+enabling RAG (Retrieval Augmented Generation) capabilities. When users interact with
+the agent, it can retrieve and reference information from these uploaded files to
+provide more accurate, contextual, and knowledgeable responses based on the specific
+content the application creator has provided. This allows for creating specialized
+agents with domain-specific knowledge beyond what's available in the base LLM.
+
+**Properties**
+- `id`:
+- `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots)
+- `attachment_file_id`: [attachment_files.id](#attachment_files)
+- `sequence`: Sequence
+
+### `studio_application_snapshot_contents`
+Content information of the listing snapshot.
+
+`studio_application_snapshot_contents` is an entity that visualizes the main content of the listing.
+
+Also, it is in charge of the main content, and attached files or thumbnails,
+etc. Note that the title or main content described in the listing helps the Agent understand it, so when you edit a listing
+Therefore, when modifying the listing, the API server spec does not change at all, and
+even if only the title or main text has changed, a new snapshot must be issued,
+reviewed again, and the version must be changed.
+
+By the way, the reason why attachment files like icons and images are belong to
+this `studio_application_snapshot` entity is, such attachment files may contain
+the prohibited signs or symbols in the national or cultural level. If not and
+and every icons and files in each language content are the same, just copy
+and paste their URL addresses.
+
+**Properties**
+- `id`: Primary Key.
+- `studio_application_snapshot_id`: [id](#studio_application_snapshots) of the attributed snapshot
+- `title`: The title of the content.
+- `summary`: Summary Description
+- `format`
+  > The format of the body, almost the extension.
+  >
+  > Similar meanings of extensions: html, md, txt, etc.
+- `body`: Content body
+
+### `studio_application_snapshot_content_thumbnails`
+Thumbnail image of the listing snapshot content.
+
+**Properties**
+- `id`:
+- `studio_application_snapshot_content_id`: [studio_application_snapshot_contents.id](#studio_application_snapshot_contents) of the attributed content
+- `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
+- `sequence`: Batch order.
 
 ### `studio_application_snapshot_prompts`
-System prompt.
+System prompt for application agents.
 
-The prompt message that the system will show to the user.
+This model stores the system prompts that define how an agent behaves and responds
+in various scenarios. System prompts are instructions that guide the LLM's behavior
+but are not visible to end users. Each prompt can have a specific type (common,
+initialize, select, execute, describe, cancel) that determines when it will be used
+during the agent's conversation flow.
 
-**Properties**
-  - `id`: Primary Key.
-  - `studio_application_snapshot_id`: 
-  - `type`
-    > type of prompts
-    > 
-    > It can be 'system', 'user', 'assistant'
-  - `subtype`: subtype of prompts
-  - `format`
-    > Format of the body.
-    > 
-    > Similar meanings of extensions: html, md, txt, etc.
-  - `title`: Title of the article
-  - `body`: Article body content
-  - `sequence`: Sequence
-
-### `studio_system_prompt_files`
+Application creators can customize these prompts to control the agent's personality,
+capabilities, limitations, and knowledge. The different prompt types correspond to
+different stages of agent interaction:
+- common: Used in every interaction as a baseline instruction
+- initialize: Used when the agent starts up before any function calls
+- select: Used when the agent needs to select appropriate functions to call
+- execute: Used when the agent is filling arguments and executing functions
+- describe: Used when the agent needs to explain function call results
+- cancel: Used when the agent needs to cancel a previously selected function
 
 **Properties**
-  - `id`: 
-  - `studio_application_system_prompt_id`: [bbs_article_snapshots.id](#bbs_article_snapshots) of the attributed article snapshot
-  - `attachment_file_id`: [attachment_files.id](#attachment_files)
-  - `sequence`: The order in which attachments are placed in the article snapshot.
+- `id`: Primary Key.
+- `studio_application_snapshot_id`:
+- `title`: Title of the article
+- `system_prompt_type`
+  > System promppt type
+  >
+  > If this column is null, it is a user prompt.
+  >
+  > 'common' | 'initialize' | 'select' | 'execute' | 'describe'
+  > https://github.com/wrtnlabs/agentica/blob/main/packages/core/src/structures/IAgenticaSystemPrompt.ts
+- `format`
+  > The format of the body, almost the extension.
+  >
+  > Similar meanings of extensions: html, md, txt, etc.
+- `body`: Article body content
 
-### `studio_application_swagger_accesses`
+### `studio_application_snapshot_prompt_files`
+Attachment files for system prompts
+
+This model stores files that are attached to system prompts, allowing prompt
+creators to include supporting documents, examples, or additional context for
+the prompts. These files can enhance the prompt's effectiveness by providing
+supplementary information that guides the agent's behavior.
+
+**Properties**
+- `id`:
+- `studio_application_system_prompt_id`: [bbs_article_snapshots.id](#bbs_article_snapshots) of the attributed article snapshot
+- `attachment_file_id`: [attachment_files.id](#attachment_files)
+- `sequence`: The order in which attachments are placed in the article snapshot.
+
+### `studio_application_snapshot_swaggers`
 Accesses to the swagger the application has
 
 Each application can connect [unit](#hub_sale_snapshot_units) purchased or
 contracted by the customer in the creation stage. The connected
 [unit](#hub_sale_snapshot_units) can be accessed by applications
-in the future and used as a target for function calling.
+in the future and used as a target for function calling. Users can also
+utilize their purchased products ([hub_order_goods](#hub_order_goods)) to create applications
+that can leverage the API capabilities of those products.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots) of the application snapshot
-  - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the unit
+- `id`: Primary Key.
+- `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots) of the application snapshot
+- `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods) of the order goods
+- `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the unit
+- `attachment_file_id`: [attachment_files.id](#attachment_files)
 
-### `studio_application_snapshot_user_prompts`
+### `studio_application_snapshot_user_prompt_chips`
 Example user prompts for chatter
 
-**Properties**
-  - `id`: 
-  - `icon_url`: The icon URL to be displayed.
-  - `studio_application_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of the attributed snapshot
-  - `sequence`: Sequence.
-
-### `studio_application_snapshot_user_prompt_translates`
-
-**Properties**
-  - `id`: 
-  - `studio_application_snapshot_user_prompt_id`: [hub_sale_snapshot_user_prompts.id](#hub_sale_snapshot_user_prompts)
-  - `value`: Examples of prompts that the user can enter.
-  - `original`: Whether it's original swagger or not.
-  - `lang_code`: Swagger language code.
-
-
-## default
-```mermaid
-erDiagram
-"hub_channel_category_names" {
-  String id PK
-  String hub_channel_category_id FK
-  String name
-  String lang_code
-}
-"studio_account_llm_keys" {
-  String id PK
-  String studio_account_id FK
-  String hub_customer_id FK
-  String hub_member_id FK
-  String code
-  String provider
-  String value
-  DateTime created_at
-  DateTime updated_at
-}
-```
-
-### `hub_channel_category_names`
+This model stores predefined prompt suggestions that application creators can
+set up as "chips" or quick-select options. When users start a session with the
+agent, they can choose from these prompt chips to quickly initiate conversations
+without having to type out complete prompts themselves. These chips help guide
+users toward effective interactions with the application by providing
+ready-to-use examples of prompts that work well with the specific agent.
 
 **Properties**
-  - `id`: 
-  - `hub_channel_category_id`: 
-  - `name`: 
-  - `lang_code`: 
+- `id`:
+- `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots) of the attributed snapshot
+- `icon_url`: The icon URL to be displayed.
+- `value`: Examples of prompts that the user can enter.
+- `sequence`: Sequence.
 
-### `studio_account_llm_keys`
+### `studio_application_releases`
+Information about the distribution program from the application.
+
+`studio_application_releases` is an entity that represents the formal release
+of an agent created from an application. When an application creator decides
+to distribute their agent, they select a specific [studio_application_snapshot](#studio_application_snapshot)
+that represents the version they want to release to users. This release process
+transforms a development version of an agent into an officially published version
+that can be widely distributed and accessed.
+
+The release includes all components of the selected snapshot, such as system prompts,
+user prompt chips, swagger connections, and other configurations that define the
+agent's behavior. Each release has a specific version identifier and can be tracked
+with creation and closure timestamps to manage the lifecycle of published agents.
+
+Releases enable application creators to control which versions of their agents are
+publicly available while continuing to develop new features in separate snapshots.
+
+**Properties**
+- `id`:
+- `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `studio_application_snapshot_id`: [id](#studio_application_snapshots) of the attributed snapshot
+- `version`: The version of the release.
+- `created_at`: The date and time the record was created.
+- `closed_at`: The date and time the record was deleted.
+
+### `studio_application_releases_llm_key`
 API key of LLM providers.
 
-`studio_account_llm_keys` is an entity storing the API key of LLM 
+`studio_application_releases_llm_key` is an entity storing the API key of LLM
 providers like "OpenAI" and "Anthropic" to be used in the
-[studio account](#studio_accounts) level.
+[release](#studio_application_release) level. When an application creator
+releases an agent, they provide these API keys so that users can interact with
+the agent without needing their own keys. This centralizes API access management
+with the creator while allowing wide distribution of the agent. Usage of these
+keys can be tracked and monitored for billing purposes, giving creators control
+over costs associated with their released agents.
 
 **Properties**
-  - `id`: Primary Key.
-  - `studio_account_id`: Belonged account's [studio_accounts.id](#studio_accounts) 
-  - `hub_customer_id`: Customer's [hub_customers.id](#hub_customers) who've created the key.
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `code`: Identifier code in the belonged account.
-  - `provider`: Provider name like openai, anthropic.
-  - `value`: API key value.
-  - `created_at`: Creation time of the record.
-  - `updated_at`: Modification time of the record.
+- `id`: Primary Key.
+- `studio_application_release_id`: Belonged account's [studio_application_release.id](#studio_application_release)
+- `hub_customer_id`: Customer's [hub_customers.id](#hub_customers) who've created the key.
+- `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+- `code`: Identifier code in the belonged account.
+- `provider`: Provider name like openai, anthropic.
+- `value`: API key value.
+- `created_at`: Creation time of the record.
+- `updated_at`: Modification time of the record.
+
+### `studio_application_release_documents`
+Documents of the application release.
+
+`studio_application_release_documents` is an entity that contains the documentation
+written about released applications. It is responsible for storing the title, body,
+and supplementary information such as attached files or thumbnails that describe
+the released application.
+
+The content described in these documents significantly affects the effectiveness
+of the agent when interacting with the LLM (Large Language Model). Additionally,
+when applications are listed in marketplaces where they can be discovered by users,
+these descriptive elements have a substantial influence on users' decisions to
+select and use an application.
+
+This is why even if the underlying system prompts, swagger connections, or functional
+components of the application remain unchanged between releases, a new release record
+must be created with an updated version if the documentation is modified. The descriptive
+content is considered as critical as the functional components of the application.
+
+For this reason, the release and its documentation have a strict 1:1 relationship,
+rather than allowing multiple documentation versions for a single release.
+
+**Properties**
+- `id`: Primary Key.
+- `studio_application_release_id`:
+- `title`: Document title.
+- `format`: Document format (extension).
+- `body`: Document body content.
+
+### `studio_application_release_document_files`
+Attachments to the documentation of the application distribution.
+
+**Properties**
+- `id`: Primary Key.
+- `studio_application_release_document_id`: [studio_repository_release_documents.id](#studio_repository_release_documents) of the content you own
+- `attachment_file_id`: [attachment_files.id](#attachment_files) of target attachments
+- `sequence`: The order of placement within the content.
