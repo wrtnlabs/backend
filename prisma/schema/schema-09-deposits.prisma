@@ -1,0 +1,326 @@
+/// Meta information of deposits.
+///
+/// `hub_deposits` is an entity that visualizes the specifications for 
+/// deposit and withdrawal in the exchange. In other words, `hub_deposits` is not 
+/// a {@link hub_deposit_histories} that indicates the deposit and withdrawal 
+/// history of deposits, but is simply metadata that specifies the specifications 
+/// for the scenario in which deposits and withdrawals occur.
+///
+/// For reference, this generative hub cannot pay cash immediately at the time 
+/// of purchase of goods (API call time) due to the nature of the API as a 
+/// transaction object. Instead, this system charges the deposit to the customer 
+/// and deducts it every time the API is called.
+///
+/// @namespace Deposits
+/// @author Samchon
+model hub_deposits {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id}
+  ///
+  /// @format uuid of the administrator customer who created the meta information
+  hub_customer_id String? @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_administrator_id String? @db.Uuid
+
+  /// Identifier code.
+  code String @db.VarChar
+
+  /// The source table that causes deposits and withdrawals of deposits.
+  source String @db.VarChar
+
+  /// Deposit/withdrawal direction.
+  ///
+  /// - `1`: Deposit
+  /// - `-1`: Deduct
+  direction Int @db.Integer
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers? @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members?   @relation(fields: [hub_administrator_id], references: [id], onDelete: Cascade)
+
+  histories hub_deposit_histories[]
+
+  @@unique([code])
+  @@index([source])
+  @@index([hub_administrator_id])
+  @@index([hub_customer_id])
+  @@index([created_at])
+}
+
+/// Customer (Citizen) deposit and withdrawal history.
+///
+/// `hub_deposit_histories` is an entity that visualizes the customer's 
+/// deposit and withdrawal history.
+///
+/// It can be considered a kind of accounting ledger table.
+///
+/// @namespace Deposits
+/// @author Samchon
+model hub_deposit_histories {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_deposits.id} of the deposit meta information
+  ///
+  /// @format uuid
+  hub_deposit_id String @db.Uuid
+
+  /// {@link hub_citizens.id} of the citizenship
+  ///
+  /// @format uuid
+  hub_citizen_id String @db.Uuid
+
+  /// The ID of the source record that caused the deposit/withdrawal.
+  ///
+  /// @format uuid
+  source_id String @db.Uuid
+
+  /// The amount of deposit and withdrawal.
+  ///
+  /// Must be a positive number, and whether there is a deposit or withdrawal 
+  /// can be seen in {@link hub_deposits.direction}. If you want to express the 
+  /// figures for deposit and withdrawal as positive/negative numbers, you can 
+  /// also multiply this field value by the {@link hub_deposits.direction} value.
+  ///
+  /// @minimum 0
+  value Float @db.DoublePrecision
+
+  /// Deposit balance.
+  ///
+  /// Deposit balance since the current record was issued.
+  ///
+  /// Originally a computable element, but denormalized for faster lookup.
+  balance Float @db.DoublePrecision
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Record Cancellation Date.
+  ///
+  /// The time when the deposit/withdrawal was canceled for some reason.
+  cancelled_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  deposit hub_deposits @relation(fields: [hub_deposit_id], references: [id], onDelete: Cascade)
+  citizen hub_citizens @relation(fields: [hub_citizen_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_deposit_id, created_at, cancelled_at])
+  @@index([hub_deposit_id, source_id, created_at, cancelled_at])
+  @@index([hub_citizen_id, created_at, cancelled_at])
+  @@index([created_at, cancelled_at])
+}
+
+/// Customer's deposit deposit request.
+///
+/// Deposits refer to the amount that customers have prepaid and charged in advance.
+///
+/// Since this generative hub is an API that is a transaction target, it is impossible 
+/// for customers to pay cash immediately at the time of purchase of goods 
+/// (API call time). Instead, this system charges the customer with a deposit and 
+/// deducts it every time the API is called.
+///
+/// And `hub_deposit_charges` is an entity that visualizes this "deposit request" 
+/// for the deposit. In other words, `hub_deposit_charges` is only the stage where 
+/// the customer expresses his/her intention to deposit the deposit, and it is 
+/// important to note that the deposit has not yet been completed.
+///
+/// @namespace Deposits
+/// @author Samchon
+model hub_deposit_charges {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_deposits.id} of the deposit meta information
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Recharge amount.
+  ///
+  /// @exclusiveMinimum 0
+  value Float @db.DoublePrecision
+
+  /// Date and time of charging application.
+  created_at DateTime @db.Timestamptz
+
+  /// Record deletion date.
+  ///
+  /// If closed during the order application stage.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers                 @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members                   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  publish  hub_deposit_charge_publishes?
+
+  @@index([hub_member_id, created_at, deleted_at])
+  @@index([created_at, deleted_at])
+}
+
+/// Payment progress information for deposit of deposit.
+///
+/// `hub_deposit_charge_publishes` is an entity that visualizes the process of 
+/// {@link hub_customers customers} requesting {@link hub_deposit_charges deposit} 
+/// and proceeding with payment.
+///
+/// Please note that the existence of the `hub_deposit_charge_publishes` record does 
+/// not mean that the payment has been completed. Payment is only completed when 
+/// the payment is completed. This is what the "process of proceeding with payment" 
+/// mentioned above means.
+///
+/// However, even after the payment has been made, there are cases where it is 
+/// suddenly canceled, so you should also be careful.
+///
+/// @namespace Deposits
+/// @author Samchon
+model hub_deposit_charge_publishes {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_deposit_charges.id}
+  ///
+  /// @format uuid for deposit recharge request
+  hub_deposit_charge_id String @db.Uuid
+
+  /// Password to be used in the Payment system.
+  ///
+  /// This is a randomly issued password for encryption of payment history by 
+  /// this system, and has absolutely nothing to do with the user.
+  password String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Payment completion date and time.
+  ///
+  /// The charging application completion date and payment date may be different. 
+  /// This is the case for "virtual account payment".
+  paid_at DateTime? @db.Timestamptz
+
+  /// Payment cancellation/refund date and time.
+  cancelled_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  charge hub_deposit_charges @relation(fields: [hub_deposit_charge_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_deposit_charge_id])
+}
+
+/// Deposit Donations.
+///
+/// `hub_deposit_donations` is an entity that embodies the case where 
+/// {@link hub_administrators administrators} directly donate deposits to specific 
+/// {@link hub_citizens customer citizens}.
+///
+/// It is designed assuming that customers will deliver deposits face-to-face, 
+/// rather than through our payment system. In some cases, you could also consider 
+/// signing a postpaid contract with a specific company and granting that company 
+/// an appropriate amount of deposits every month.
+///
+/// @namespace Deposits
+/// @author Samchon
+model hub_deposit_donations {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id}
+  ///
+  /// @format uuid of the administrator customer who contributed the deposit
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Citizens who received the deposit {@link hub_citizens.id}
+  ///
+  /// @format uuid
+  hub_citizen_id String @db.Uuid
+
+  /// Deposit contribution amount.
+  ///
+  /// @minimum 0
+  value Float @db.DoublePrecision
+
+  /// Reason for granting the deposit.
+  ///
+  /// Why did the administrator grant the deposit to the citizen?
+  reason String
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  citizen  hub_citizens  @relation(fields: [hub_citizen_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+  @@index([hub_citizen_id, created_at])
+}
+
+/// Information on each citizen's deposit balance.
+///
+/// @author Samchon
+/// @hidden
+model mv_hub_deposit_balances {
+  //----
+  // COLUMNS
+  //----
+  /// {@link hub_citizens.id} of the citizenship
+  ///
+  /// @format uuid
+  hub_citizen_id String @id @db.Uuid
+
+  /// Balance.
+  value Float @db.DoublePrecision
+
+  //----
+  // RELATIONS
+  //----
+  /// Citizen of the country.
+  citizen hub_citizens @relation(fields: [hub_citizen_id], references: [id], onDelete: Cascade)
+}

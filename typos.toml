@@ -1,0 +1,22 @@
+[default]
+locale = 'en-us'
+extend-ignore-re = [
+  "(?Rm)^.*(<!--|#|//)\\s*spellchecker:disable-line(-->|\n)?$",
+  "(?s)(<!--|#|//)\\s*spellchecker:off\\s*(-->|\n).*?(<!--|#|//)\\s*spellchecker:on",
+]
+
+[default.extend-words]
+typia = "typia"
+criterias  = "criterias"
+entires = "entries"
+logging = "logging"
+
+[files]
+extend-exclude = [
+  "assets", 
+  "src/compiler/raw",
+  "website/public", 
+  "*.json", 
+  "*.log",
+  "*.sql",
+]

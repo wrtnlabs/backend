@@ -18,6 +18,7 @@
 - [External](#external)
 - [Applications](#applications)
 - [Repositories](#repositories)
+- [default](#default)
 
 ## Articles
 ```mermaid
@@ -227,7 +228,6 @@ erDiagram
   String id PK
   String code UK
   String name UK
-  Boolean exclusive
   DateTime created_at
   DateTime updated_at
   DateTime deleted_at "nullable"
@@ -242,12 +242,6 @@ erDiagram
   DateTime created_at
   DateTime updated_at
   DateTime deleted_at "nullable"
-}
-"hub_channel_category_names" {
-  String id PK
-  String hub_channel_category_id FK
-  String name
-  String lang_code
 }
 "hub_sections" {
   String id PK
@@ -286,29 +280,20 @@ erDiagram
   DateTime activated_at "nullable"
   DateTime expired_at "nullable"
 }
-"hub_sale_snapshot_channels" {
+"hub_sale_snapshot_categories" {
   String id PK
   String hub_sale_snapshot_id FK
-  String hub_channel_id FK
-  Int sequence
-}
-"hub_sale_snapshot_channel_categories" {
-  String id PK
-  String hub_sale_snapshot_channel_id FK
   String hub_channel_category_id FK
   Int sequence
 }
 "hub_channel_categories" }o--|| "hub_channels" : channel
 "hub_channel_categories" }o--o| "hub_channel_categories" : parent
-"hub_channel_category_names" }o--|| "hub_channel_categories" : category
 "studio_channel_categories" }o--|| "hub_channels" : channel
 "studio_channel_categories" }o--o| "studio_channel_categories" : parent
 "hub_sales" }o--|| "hub_sections" : section
 "hub_sale_snapshots" }|--|| "hub_sales" : sale
-"hub_sale_snapshot_channels" }o--|| "hub_sale_snapshots" : snapshot
-"hub_sale_snapshot_channels" }o--|| "hub_channels" : channel
-"hub_sale_snapshot_channel_categories" }o--|| "hub_sale_snapshot_channels" : to_channel
-"hub_sale_snapshot_channel_categories" }o--|| "hub_channel_categories" : category
+"hub_sale_snapshot_categories" }o--|| "hub_sale_snapshots" : snapshot
+"hub_sale_snapshot_categories" }o--|| "hub_channel_categories" : category
 ```
 
 ### `hub_channels`
@@ -332,11 +317,6 @@ distributing it to partners, you will also need a new channel.
   - `id`: 
   - `code`: Identifier code.
   - `name`: Channel name.
-  - `exclusive`
-    > Exclusivity.
-    > 
-    > If this value is `true`, the channel is isolated from other channels,
-    > and does not share customer information.
   - `created_at`: The date and time the record was created.
   - `updated_at`: Date and time of record edit.
   - `deleted_at`: Date and time of record deletion.
@@ -392,18 +372,6 @@ editing categories.
   - `created_at`: The date and time the record was created.
   - `updated_at`: Date and time the record was modified.
   - `deleted_at`: Date and time of record deletion.
-
-### `hub_channel_category_names`
-Channel category name information.
-
-`hub_channel_category_names` is an entity that visualizes the category name
-in multiple languages within the channel.
-
-**Properties**
-  - `id`: 
-  - `hub_channel_category_id`: 
-  - `name`: 
-  - `lang_code`: 
 
 ### `hub_sections`
 Section information.
@@ -1019,6 +987,12 @@ erDiagram
   Float fixed
   Float variable
 }
+"hub_sale_snapshot_categories" {
+  String id PK
+  String hub_sale_snapshot_id FK
+  String hub_channel_category_id FK
+  Int sequence
+}
 "hub_sale_snapshots" }|--|| "hub_sales" : sale
 "hub_sale_snapshot_user_prompts" }o--|| "hub_sale_snapshots" : snapshot
 "hub_sale_snapshot_units" }|--|| "hub_sale_snapshots" : snapshot
@@ -1033,6 +1007,7 @@ erDiagram
 "hub_sale_snapshot_unit_stock_choices" }o--|| "hub_sale_snapshot_unit_stocks" : stock
 "hub_sale_snapshot_unit_stock_choices" }o--|| "hub_sale_snapshot_unit_option_candidates" : candidate
 "hub_sale_snapshot_unit_stock_prices" }|--|| "hub_sale_snapshot_unit_stocks" : stock
+"hub_sale_snapshot_categories" }o--|| "hub_sale_snapshots" : snapshot
 ```
 
 ### `hub_sales`
@@ -1395,6 +1370,24 @@ the examples below.
     > 
     > Cost per API usage exceeding the limit quantity.
 
+### `hub_sale_snapshot_categories`
+Category classification info of sale snapshot.
+
+`hub_sale_snapshot_categories` is an entity that expresses 
+which [category](#hub_channel_categories) the listing 
+[snapshot](#hub_sale_snapshots).
+
+It is designed to resolve the M:N relationship between 
+[hub_sale_snapshots](#hub_sale_snapshots) and [hub_channel_categories](#hub_channel_categories), 
+respectively. Of course, if the target category being referred to is a 
+major category, all minor categories belonging to it can also be used.
+
+**Properties**
+  - `id`: Primary Key.
+  - `hub_sale_snapshot_id`: Belonged snapshot's [hub_sale_snapshots.id](#hub_sale_snapshots)
+  - `hub_channel_category_id`: Belonged category's [hub_channel_categories.id](#hub_channel_categories)
+  - `sequence`: Sequence order in belonged snapshot.
+
 
 ## SaleContents
 ```mermaid
@@ -1434,18 +1427,6 @@ erDiagram
   String value
   Int sequence
 }
-"hub_sale_snapshot_channels" {
-  String id PK
-  String hub_sale_snapshot_id FK
-  String hub_channel_id FK
-  Int sequence
-}
-"hub_sale_snapshot_channel_categories" {
-  String id PK
-  String hub_sale_snapshot_channel_id FK
-  String hub_channel_category_id FK
-  Int sequence
-}
 "hub_sale_replicas" {
   String id PK
   String hub_sale_id FK
@@ -1455,7 +1436,6 @@ erDiagram
   String id PK
   String code UK
   String name UK
-  Boolean exclusive
   DateTime created_at
   DateTime updated_at
   DateTime deleted_at "nullable"
@@ -1502,10 +1482,6 @@ erDiagram
 "hub_sale_snapshot_content_icons" }o--|| "hub_sale_snapshot_contents" : content
 "hub_sale_snapshot_content_files" }o--|| "hub_sale_snapshot_contents" : content
 "hub_sale_snapshot_content_tags" }o--|| "hub_sale_snapshot_contents" : content
-"hub_sale_snapshot_channels" }o--|| "hub_sale_snapshots" : snapshot
-"hub_sale_snapshot_channels" }o--|| "hub_channels" : channel
-"hub_sale_snapshot_channel_categories" }o--|| "hub_sale_snapshot_channels" : to_channel
-"hub_sale_snapshot_channel_categories" }o--|| "hub_channel_categories" : category
 "hub_sale_replicas" |o--|| "hub_sales" : sale
 "hub_sale_replicas" }o--|| "hub_sale_snapshots" : snapshot
 "hub_channel_categories" }o--|| "hub_channels" : channel
@@ -1593,38 +1569,6 @@ for the listing snapshot content.
   - `id`: 
   - `hub_sale_snapshot_content_id`: [hub_sale_snapshot_contents.id](#hub_sale_snapshot_contents) of the attributed content.
   - `value`: Search tag value.
-  - `sequence`: Batch order.
-
-### `hub_sale_snapshot_channels`
-Sales channel information for the listing snapshot.
-
-`hub_sale_snapshot_channels` is an entity that represents which
-[listing snapshot](#hub_sale_snapshots) is sold on which
-[channels](#hub_channels), and is designed to resolve the M:N relationship
-between the two tables.
-
-**Properties**
-  - `id`: 
-  - `hub_sale_snapshot_id`: [hub_sale_snapshots.id](#hub_sale_snapshots) of the attributed listing snapshots.
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the affiliated channel.
-  - `sequence`: Batch order.
-
-### `hub_sale_snapshot_channel_categories`
-Channel category classification information of the listing snapshot.
-
-`hub_sale_snapshot_channel_categories` is an entity that represents which
-[listing snapshot](#hub_sale_snapshots) is classified into which
-[category](#hub_channel_categories) in each sales [channel](#hub_channels).
-
-It is designed to resolve the M: N relationship between [hub_sale_snapshots](#hub_sale_snapshots)
-and [hub_channel_categories](#hub_channel_categories). Of course, if the target category being
-referenced is a major category, all of the subcategories belonging to it are
-also available.
-
-**Properties**
-  - `id`: 
-  - `hub_sale_snapshot_channel_id`: [hub_sale_snapshot_channels.id](#hub_sale_snapshot_channels) of the assigned listing snapshot channel
-  - `hub_channel_category_id`: [hub_channel_categories.id](#hub_channel_categories) of the category of affiliation
   - `sequence`: Batch order.
 
 ### `hub_sale_replicas`
@@ -2873,11 +2817,6 @@ erDiagram
   String id PK
   String hub_section_id FK
 }
-"hub_coupon_criteria_of_channels" {
-  String id PK
-  String hub_channel_id FK
-  String hub_channel_category_id FK "nullable"
-}
 "hub_coupon_criteria_of_sellers" {
   String id PK
   String hub_seller_id FK
@@ -2917,7 +2856,6 @@ erDiagram
 }
 "hub_coupon_criterias" }o--|| "hub_coupons" : coupon
 "hub_coupon_criteria_of_sections" |o--|| "hub_coupon_criterias" : base
-"hub_coupon_criteria_of_channels" |o--|| "hub_coupon_criterias" : base
 "hub_coupon_criteria_of_sellers" |o--|| "hub_coupon_criterias" : base
 "hub_coupon_criteria_of_sales" |o--|| "hub_coupon_criterias" : base
 "hub_coupon_criteria_of_funnels" |o--|| "hub_coupon_criterias" : base
@@ -3096,23 +3034,6 @@ group. It is a coupon that can be applied or not applied to the target sections.
 **Properties**
   - `id`: 
   - `hub_section_id`: [hub_coupon_criterias.id](#hub_coupon_criterias) of the affiliate discount coupon
-
-### `hub_coupon_criteria_of_channels`
-Conditions for discount coupon channels.
-
-`hub_coupon_criteria_of_channels` is a subtype entity of [hub_coupon_criterias](#hub_coupon_criterias), and is used to set conditions for a specific [channel](#hub_channels) or a category of the corresponding [channel](#hub_channel_categories).
-
-If the value of [hub_coupon_criterias.direction](#hub_coupon_criterias) is `"include"`,
-the coupon is usable only for the corresponding channel (or category), and 
-if it is `"exclude"`, the coupon is unusable. And if there are multiple 
-`hub_coupon_criteria_of_channels` records in one [coupon](#hub_coupons), 
-then the condition is applied as a group. For the target channels and categories, 
-the coupon is applicable or inapplicable.
-
-**Properties**
-  - `id`: 
-  - `hub_channel_id`: [hub_channels.id](#hub_channels) of the target channel
-  - `hub_channel_category_id`: [hub_channel_categories.id](#hub_channel_categories) of the target channel category
 
 ### `hub_coupon_criteria_of_sellers`
 Conditions for sellers of discount coupons.
@@ -3399,17 +3320,6 @@ erDiagram
   String role
   DateTime created_at
 }
-"studio_account_llm_keys" {
-  String id PK
-  String studio_account_id FK
-  String hub_customer_id FK
-  String hub_member_id FK
-  String code
-  String provider
-  String value
-  DateTime created_at
-  DateTime updated_at
-}
 "studio_account_secrets" {
   String id PK
   String studio_account_id FK
@@ -3520,7 +3430,6 @@ erDiagram
 "studio_enterprise_team_companions" }o--|| "studio_enterprise_teams" : team
 "studio_enterprise_team_companions" }o--|| "studio_enterprise_employees" : employee
 "studio_enterprise_team_companion_appointments" }|--|| "studio_enterprise_team_companions" : companion
-"studio_account_llm_keys" }o--|| "studio_accounts" : account
 "studio_account_secrets" }o--|| "studio_accounts" : account
 "studio_account_secret_values" }o--|| "studio_account_secrets" : secret
 "studio_account_secret_value_scopes" }o--|| "studio_account_secret_values" : secretValue
@@ -3718,24 +3627,6 @@ and is accumulated whenever the member's role changes.
   - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
   - `role`: The role assigned.
   - `created_at`: The date and time the record was created.
-
-### `studio_account_llm_keys`
-API key of LLM providers.
-
-`studio_account_llm_keys` is an entity storing the API key of LLM 
-providers like "OpenAI" and "Anthropic" to be used in the
-[studio account](#studio_accounts) level.
-
-**Properties**
-  - `id`: Primary Key.
-  - `studio_account_id`: Belonged account's [studio_accounts.id](#studio_accounts) 
-  - `hub_customer_id`: Customer's [hub_customers.id](#hub_customers) who've created the key.
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `code`: Identifier code in the belonged account.
-  - `provider`: Provider name like openai, anthropic.
-  - `value`: API key value.
-  - `created_at`: Creation time of the record.
-  - `updated_at`: Modification time of the record.
 
 ### `studio_account_secrets`
 Secret variable set information registered to the studio account.
@@ -4062,10 +3953,11 @@ erDiagram
   String id PK
   String studio_meta_chat_session_connection_id FK
   String speaker
-  String kind "nullable"
-  String data
+  String type
+  String arguments
+  String value "nullable"
   DateTime created_at
-  DateTime completed_at "nullable"
+  DateTime completed_at
 }
 "studio_meta_chat_session_shares" {
   String id PK
@@ -4168,18 +4060,17 @@ function calls.
     > 
     > - customer: customer (human)
     > - agent: LLM agent (robot)
-  - `kind`: Kind of the message.
-  - `data`
-    > Detailed data.
+  - `type`: Discriminator type.
+  - `arguments`
+    > Arguments of RPC.
     > 
-    > Detailed data of the message, or in other words, detailed history information
-    > about the RPC function call.
+    > Encrypted due to personal information reason.
+  - `value`
+    > Return value of error data.
     > 
-    > For more information, see `IStudioMetaChatSessionMessageData` on the DTO.
-    > 
-    > Encrypted because it may contain personal information.
+    > Encrypted due to personal information reason.
   - `created_at`: Time of ignition.
-  - `completed_at`: Return time after receiving the message from the other party.
+  - `completed_at`: Completion time of RPC.
 
 ### `studio_meta_chat_session_shares`
 Sharing of Meta LLM chat sessions.
@@ -4266,99 +4157,53 @@ Table that stores URL Swagger Translation Information.
 erDiagram
 "studio_applications" {
   String id PK
+  String hub_section_id FK
   String hub_customer_id FK
   String hub_member_id FK
+  String type
+  String status
   DateTime created_at
-  DateTime deleted_at "nullable"
 }
 "studio_application_snapshots" {
   String id PK
   String studio_application_id FK
-  String version
-  String version_description "nullable"
+  String name
+  String representative_image "nullable"
   DateTime created_at
-  DateTime deleted_at "nullable"
-}
-"studio_application_snapshot_knowledge_files" {
-  String id PK
-  String studio_application_snapshot_id FK
-  String attachment_file_id FK
-  Int sequence
-}
-"studio_application_snapshot_contents" {
-  String id PK
-  String studio_application_snapshot_id FK
-  String title
-  String summary "nullable"
-  String format
-  String body
-}
-"studio_application_snapshot_content_thumbnails" {
-  String id PK
-  String studio_application_snapshot_content_id FK
-  String attachment_file_id FK
-  Int sequence
 }
 "studio_application_snapshot_prompts" {
   String id PK
   String studio_application_snapshot_id FK
-  String title
-  String system_prompt_type "nullable"
+  String type
+  String subtype
   String format
+  String title
   String body
+  Int sequence
 }
-"studio_application_snapshot_prompt_files" {
+"studio_system_prompt_files" {
   String id PK
   String studio_application_system_prompt_id FK
   String attachment_file_id FK
   Int sequence
 }
-"studio_application_snapshot_swaggers" {
+"studio_application_swagger_accesses" {
   String id PK
   String studio_application_snapshot_id FK
-  String hub_order_good_id FK "nullable"
   String hub_sale_snapshot_unit_id FK
-  String attachment_file_id FK "nullable"
 }
-"studio_application_snapshot_user_prompt_chips" {
+"studio_application_snapshot_user_prompts" {
   String id PK
-  String studio_application_snapshot_id FK
   String icon_url "nullable"
-  String value
-  Int sequence
-}
-"studio_application_releases" {
-  String id PK
-  String hub_customer_id FK
-  String hub_member_id FK
   String studio_application_snapshot_id FK
-  String version
-  DateTime created_at
-  DateTime closed_at "nullable"
-}
-"studio_application_releases_llm_key" {
-  String id PK
-  String studio_application_release_id FK
-  String hub_customer_id FK
-  String hub_member_id FK
-  String code
-  String provider
-  String value
-  DateTime created_at
-  DateTime updated_at
-}
-"studio_application_release_documents" {
-  String id PK
-  String studio_application_release_id FK
-  String title
-  String format
-  String body
-}
-"studio_application_release_document_files" {
-  String id PK
-  String studio_application_release_document_id FK
-  String attachment_file_id FK
   Int sequence
+}
+"studio_application_snapshot_user_prompt_translates" {
+  String id PK
+  String studio_application_snapshot_user_prompt_id FK
+  String value
+  Boolean original
+  String lang_code "nullable"
 }
 "hub_sale_snapshot_units" {
   String id PK
@@ -4375,19 +4220,13 @@ erDiagram
   String host_real
   String host_dev "nullable"
 }
-"studio_application_snapshots" }|--|| "studio_applications" : application
-"studio_application_snapshot_knowledge_files" }o--|| "studio_application_snapshots" : snapshot
-"studio_application_snapshot_contents" |o--|| "studio_application_snapshots" : snapshot
-"studio_application_snapshot_content_thumbnails" }o--|| "studio_application_snapshot_contents" : content
-"studio_application_snapshot_prompts" }o--|| "studio_application_snapshots" : snapshot
-"studio_application_snapshot_prompt_files" }o--|| "studio_application_snapshot_prompts" : system_prompt
-"studio_application_snapshot_swaggers" }o--|| "studio_application_snapshots" : snapshot
-"studio_application_snapshot_swaggers" }o--|| "hub_sale_snapshot_units" : unit
-"studio_application_snapshot_user_prompt_chips" }o--|| "studio_application_snapshots" : snapshot
-"studio_application_releases" |o--|| "studio_application_snapshots" : snapshot
-"studio_application_releases_llm_key" }|--|| "studio_application_releases" : relase
-"studio_application_release_documents" |o--|| "studio_application_releases" : release
-"studio_application_release_document_files" }o--|| "studio_application_release_documents" : document
+"studio_application_snapshots" }o--|| "studio_applications" : application
+"studio_application_snapshot_prompts" }o--|| "studio_application_snapshots" : application_snapshot
+"studio_system_prompt_files" }o--|| "studio_application_snapshot_prompts" : system_prompt
+"studio_application_swagger_accesses" }o--|| "studio_application_snapshots" : application_snapshots
+"studio_application_swagger_accesses" }o--|| "hub_sale_snapshot_units" : sale_snapshot_units
+"studio_application_snapshot_user_prompts" }o--|| "studio_application_snapshots" : application_snapshots
+"studio_application_snapshot_user_prompt_translates" }o--|| "studio_application_snapshot_user_prompts" : application_snapshot_user_prompts
 "hub_sale_snapshot_unit_swaggers" |o--|| "hub_sale_snapshot_units" : unit
 ```
 
@@ -4401,126 +4240,55 @@ or create a chat session using an `studio_applications` created by the user.
 
 **Properties**
   - `id`: Primary Key.
+  - `hub_section_id`: [hub_sections.id](#hub_sections) in the attributed section
   - `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
   - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
+  - `type`
+    > Type of application
+    > 
+    > It can be only 'public', 'private', 'protected'.
+  - `status`
+    > Application status, pending
+    > 
+    > It can be 'temp', 'pending', 'approved'.
   - `created_at`: The date and time the record was created.
-  - `deleted_at`: The date and time the record was deleted.
 
 ### `studio_application_snapshots`
 Listing snapshot information.
 
-`studio_application_snapshots` is an entity that represents snapshots of
-[listings](#studio_applications). And `studio_application_snapshots` records are created
+`studio_application_snapshots` is an entity that represents snapshots of 
+[listings](#studio_applications). And `studio_application_snapshots` records are created 
 whenever a new listing is created or an existing listing is modified.
 
 **Properties**
   - `id`: Primary Key.
   - `studio_application_id`: [studio_applications.id](#studio_applications) of the property
-  - `version`: Version
-  - `version_description`
-    > Version Description.
-    > 
-    > You can record information about the version description.
+  - `name`: application name
+  - `representative_image`: application representative image
   - `created_at`: The date and time the record was created.
-  - `deleted_at`: The date and time the record was deleted.
-
-### `studio_application_snapshot_knowledge_files`
-Application snapshot files
-
-This model stores files that are uploaded to train or enhance the agent associated
-with an application snapshot. These files serve as knowledge sources for the agent,
-enabling RAG (Retrieval Augmented Generation) capabilities. When users interact with
-the agent, it can retrieve and reference information from these uploaded files to
-provide more accurate, contextual, and knowledgeable responses based on the specific
-content the application creator has provided. This allows for creating specialized
-agents with domain-specific knowledge beyond what's available in the base LLM.
-
-**Properties**
-  - `id`: 
-  - `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots)
-  - `attachment_file_id`: [attachment_files.id](#attachment_files)
-  - `sequence`: Sequence
-
-### `studio_application_snapshot_contents`
-Content information of the listing snapshot.
-
-`studio_application_snapshot_contents` is an entity that visualizes the main content of the listing.
-
-Also, it is in charge of the main content, and attached files or thumbnails,
-etc. Note that the title or main content described in the listing helps the Agent understand it, so when you edit a listing
-Therefore, when modifying the listing, the API server spec does not change at all, and
-even if only the title or main text has changed, a new snapshot must be issued,
-reviewed again, and the version must be changed.
-
-By the way, the reason why attachment files like icons and images are belong to
-this `studio_application_snapshot` entity is, such attachment files may contain
-the prohibited signs or symbols in the national or cultural level. If not and
-and every icons and files in each language content are the same, just copy
-and paste their URL addresses.
-
-**Properties**
-  - `id`: Primary Key.
-  - `studio_application_snapshot_id`: [id](#studio_application_snapshots) of the attributed snapshot
-  - `title`: The title of the content.
-  - `summary`: Summary Description
-  - `format`
-    > The format of the body, almost the extension.
-    > 
-    > Similar meanings of extensions: html, md, txt, etc.
-  - `body`: Content body
-
-### `studio_application_snapshot_content_thumbnails`
-Thumbnail image of the listing snapshot content.
-
-**Properties**
-  - `id`: 
-  - `studio_application_snapshot_content_id`: [studio_application_snapshot_contents.id](#studio_application_snapshot_contents) of the attributed content
-  - `attachment_file_id`: [hub_attachment_files.id](#hub_attachment_files) of the attached file
-  - `sequence`: Batch order.
 
 ### `studio_application_snapshot_prompts`
-System prompt for application agents.
+System prompt.
 
-This model stores the system prompts that define how an agent behaves and responds
-in various scenarios. System prompts are instructions that guide the LLM's behavior
-but are not visible to end users. Each prompt can have a specific type (common,
-initialize, select, execute, describe, cancel) that determines when it will be used
-during the agent's conversation flow.
-
-Application creators can customize these prompts to control the agent's personality,
-capabilities, limitations, and knowledge. The different prompt types correspond to
-different stages of agent interaction:
-- common: Used in every interaction as a baseline instruction
-- initialize: Used when the agent starts up before any function calls
-- select: Used when the agent needs to select appropriate functions to call
-- execute: Used when the agent is filling arguments and executing functions
-- describe: Used when the agent needs to explain function call results
-- cancel: Used when the agent needs to cancel a previously selected function
+The prompt message that the system will show to the user.
 
 **Properties**
   - `id`: Primary Key.
   - `studio_application_snapshot_id`: 
-  - `title`: Title of the article
-  - `system_prompt_type`
-    > System promppt type
+  - `type`
+    > type of prompts
     > 
-    > If this column is null, it is a user prompt.
-    > 
-    > 'common' | 'initialize' | 'select' | 'execute' | 'describe'
-    > https://github.com/wrtnlabs/agentica/blob/main/packages/core/src/structures/IAgenticaSystemPrompt.ts
+    > It can be 'system', 'user', 'assistant'
+  - `subtype`: subtype of prompts
   - `format`
-    > The format of the body, almost the extension.
+    > Format of the body.
     > 
     > Similar meanings of extensions: html, md, txt, etc.
+  - `title`: Title of the article
   - `body`: Article body content
+  - `sequence`: Sequence
 
-### `studio_application_snapshot_prompt_files`
-Attachment files for system prompts
-
-This model stores files that are attached to system prompts, allowing prompt
-creators to include supporting documents, examples, or additional context for
-the prompts. These files can enhance the prompt's effectiveness by providing
-supplementary information that guides the agent's behavior.
+### `studio_system_prompt_files`
 
 **Properties**
   - `id`: 
@@ -4528,82 +4296,78 @@ supplementary information that guides the agent's behavior.
   - `attachment_file_id`: [attachment_files.id](#attachment_files)
   - `sequence`: The order in which attachments are placed in the article snapshot.
 
-### `studio_application_snapshot_swaggers`
+### `studio_application_swagger_accesses`
 Accesses to the swagger the application has
 
 Each application can connect [unit](#hub_sale_snapshot_units) purchased or
 contracted by the customer in the creation stage. The connected
 [unit](#hub_sale_snapshot_units) can be accessed by applications
-in the future and used as a target for function calling. Users can also
-utilize their purchased products ([hub_order_goods](#hub_order_goods)) to create applications
-that can leverage the API capabilities of those products.
+in the future and used as a target for function calling.
 
 **Properties**
   - `id`: Primary Key.
   - `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots) of the application snapshot
-  - `hub_order_good_id`: [hub_order_goods.id](#hub_order_goods) of the order goods
   - `hub_sale_snapshot_unit_id`: [hub_sale_snapshot_units.id](#hub_sale_snapshot_units) of the unit
-  - `attachment_file_id`: [attachment_files.id](#attachment_files)
 
-### `studio_application_snapshot_user_prompt_chips`
+### `studio_application_snapshot_user_prompts`
 Example user prompts for chatter
 
-This model stores predefined prompt suggestions that application creators can
-set up as "chips" or quick-select options. When users start a session with the
-agent, they can choose from these prompt chips to quickly initiate conversations
-without having to type out complete prompts themselves. These chips help guide
-users toward effective interactions with the application by providing
-ready-to-use examples of prompts that work well with the specific agent.
-
 **Properties**
   - `id`: 
-  - `studio_application_snapshot_id`: [studi_application_snapshots.id](#studi_application_snapshots) of the attributed snapshot
   - `icon_url`: The icon URL to be displayed.
-  - `value`: Examples of prompts that the user can enter.
+  - `studio_application_snapshot_id`: [hub_sale_snapshots](#hub_sale_snapshots) of the attributed snapshot
   - `sequence`: Sequence.
 
-### `studio_application_releases`
-Information about the distribution program from the application.
-
-`studio_application_releases` is an entity that represents the formal release
-of an agent created from an application. When an application creator decides
-to distribute their agent, they select a specific [studio_application_snapshot](#studio_application_snapshot)
-that represents the version they want to release to users. This release process
-transforms a development version of an agent into an officially published version
-that can be widely distributed and accessed.
-
-The release includes all components of the selected snapshot, such as system prompts,
-user prompt chips, swagger connections, and other configurations that define the
-agent's behavior. Each release has a specific version identifier and can be tracked
-with creation and closure timestamps to manage the lifecycle of published agents.
-
-Releases enable application creators to control which versions of their agents are
-publicly available while continuing to develop new features in separate snapshots.
+### `studio_application_snapshot_user_prompt_translates`
 
 **Properties**
   - `id`: 
-  - `hub_customer_id`: [hub_customers.id](#hub_customers) of the seller customer who registered the item
-  - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
-  - `studio_application_snapshot_id`: [id](#studio_application_snapshots) of the attributed snapshot
-  - `version`: The version of the release.
-  - `created_at`: The date and time the record was created.
-  - `closed_at`: The date and time the record was deleted.
+  - `studio_application_snapshot_user_prompt_id`: [hub_sale_snapshot_user_prompts.id](#hub_sale_snapshot_user_prompts)
+  - `value`: Examples of prompts that the user can enter.
+  - `original`: Whether it's original swagger or not.
+  - `lang_code`: Swagger language code.
 
-### `studio_application_releases_llm_key`
+
+## default
+```mermaid
+erDiagram
+"hub_channel_category_names" {
+  String id PK
+  String hub_channel_category_id FK
+  String name
+  String lang_code
+}
+"studio_account_llm_keys" {
+  String id PK
+  String studio_account_id FK
+  String hub_customer_id FK
+  String hub_member_id FK
+  String code
+  String provider
+  String value
+  DateTime created_at
+  DateTime updated_at
+}
+```
+
+### `hub_channel_category_names`
+
+**Properties**
+  - `id`: 
+  - `hub_channel_category_id`: 
+  - `name`: 
+  - `lang_code`: 
+
+### `studio_account_llm_keys`
 API key of LLM providers.
 
-`studio_application_releases_llm_key` is an entity storing the API key of LLM
+`studio_account_llm_keys` is an entity storing the API key of LLM 
 providers like "OpenAI" and "Anthropic" to be used in the
-[release](#studio_application_release) level. When an application creator
-releases an agent, they provide these API keys so that users can interact with
-the agent without needing their own keys. This centralizes API access management
-with the creator while allowing wide distribution of the agent. Usage of these
-keys can be tracked and monitored for billing purposes, giving creators control
-over costs associated with their released agents.
+[studio account](#studio_accounts) level.
 
 **Properties**
   - `id`: Primary Key.
-  - `studio_application_release_id`: Belonged account's [studio_application_release.id](#studio_application_release)
+  - `studio_account_id`: Belonged account's [studio_accounts.id](#studio_accounts) 
   - `hub_customer_id`: Customer's [hub_customers.id](#hub_customers) who've created the key.
   - `hub_member_id`: Affiliate member's [hub_members.id](#hub_members)
   - `code`: Identifier code in the belonged account.
@@ -4611,41 +4375,3 @@ over costs associated with their released agents.
   - `value`: API key value.
   - `created_at`: Creation time of the record.
   - `updated_at`: Modification time of the record.
-
-### `studio_application_release_documents`
-Documents of the application release.
-
-`studio_application_release_documents` is an entity that contains the documentation
-written about released applications. It is responsible for storing the title, body,
-and supplementary information such as attached files or thumbnails that describe
-the released application.
-
-The content described in these documents significantly affects the effectiveness
-of the agent when interacting with the LLM (Large Language Model). Additionally,
-when applications are listed in marketplaces where they can be discovered by users,
-these descriptive elements have a substantial influence on users' decisions to
-select and use an application.
-
-This is why even if the underlying system prompts, swagger connections, or functional
-components of the application remain unchanged between releases, a new release record
-must be created with an updated version if the documentation is modified. The descriptive
-content is considered as critical as the functional components of the application.
-
-For this reason, the release and its documentation have a strict 1:1 relationship,
-rather than allowing multiple documentation versions for a single release.
-
-**Properties**
-  - `id`: Primary Key.
-  - `studio_application_release_id`: 
-  - `title`: Document title.
-  - `format`: Document format (extension).
-  - `body`: Document body content.
-
-### `studio_application_release_document_files`
-Attachments to the documentation of the application distribution.
-
-**Properties**
-  - `id`: Primary Key.
-  - `studio_application_release_document_id`: [studio_repository_release_documents.id](#studio_repository_release_documents) of the content you own
-  - `attachment_file_id`: [attachment_files.id](#attachment_files) of target attachments
-  - `sequence`: The order of placement within the content.

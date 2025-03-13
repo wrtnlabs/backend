@@ -1,0 +1,3 @@
+code,source,target,title,body
+studio_repository_workflow_snapshot_execution_success,studio_repository_workflow_snapshot_program_histories,customer,"워크플로우 실행에 성공하였습니다.","성공"
+studio_repository_workflow_snapshot_execution_failure,studio_repository_workflow_snapshot_program_histories,customer,"워크플로우 실행에 실패했습니다.","실패"

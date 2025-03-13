@@ -1,0 +1,8 @@
+{
+  "entryPoints": [
+    "./src/api/structures/**/*.ts",
+    "./src/api/constants/**/*.ts",
+    "./src/api/diagnosers/**/*.ts",
+  ],
+  "out": "website/public/api"
+}

@@ -1,0 +1,128 @@
+/// Metadata information for push messages.
+///
+/// @namespace PushMessage
+/// @author Samchon
+model hub_push_messages {
+  //----
+  // PROPERTIES
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// Identifier code.
+  code String @db.VarChar
+
+  /// The name of the source table that generates the push message.
+  source String @db.VarChar
+
+  /// The recipient actor type of the push message.
+  ///
+  /// - customer
+  /// - seller
+  /// - administrator
+  target String @db.VarChar
+
+  /// Creation time of record.
+  created_at DateTime @db.Timestamptz
+
+  /// Deleted time of record.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  contents hub_push_message_contents[]
+  mv_last  mv_hub_push_message_last_contents?
+
+  @@unique([code])
+  @@index([source])
+}
+
+/// Content information of the push message.
+///
+/// @namespace PushMessage
+/// @author Samchon
+model hub_push_message_contents {
+  //----
+  // PROPERTIES
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// {@link hub_push_messages.id} in the attributed push message metadata
+  hub_push_message_id String @db.Uuid
+
+  /// Content title.
+  title String @db.VarChar
+
+  /// Body of content.
+  body String
+
+  /// Record Creation Date.
+  ///
+  /// The date and time the push message was first created or the content was changed.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  message   hub_push_messages                  @relation(fields: [hub_push_message_id], references: [id], onDelete: Cascade)
+  mv_last   mv_hub_push_message_last_contents?
+  histories hub_push_message_histories[]
+}
+
+/// List of push message sending history.
+///
+/// @namespace PushMessage
+/// @author Samchon
+model hub_push_message_histories {
+  //----
+  // PROPERTIES
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// {@link hub_push_message_contents.id} of the attributed push message content
+  hub_push_message_content_id String @db.Uuid
+
+  /// The ID of the source record that generated the push message.
+  source_id String @db.Uuid
+
+  /// {@link hub_customers.id} of customers who will receive push messages
+  hub_customer_receiver_id String @db.Uuid
+
+  /// {@link hub_customers.id} of customers who received and read the push message
+  hub_customer_reader_id String? @db.Uuid
+
+  /// Bound variable JSON (type `Record<string, string>`)
+  ///
+  /// Encrypted because it may contain personal information.
+  variables String
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// The date and time the push message history was read.
+  read_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  content  hub_push_message_contents @relation(fields: [hub_push_message_content_id], references: [id], onDelete: Cascade)
+  receiver hub_customers             @relation("hub_push_message_histories_receiver", fields: [hub_customer_receiver_id], references: [id], onDelete: Cascade)
+  reader   hub_customers?            @relation("hub_push_message_histories_reader", fields: [hub_customer_reader_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_push_message_content_id, source_id])
+  @@index([hub_customer_receiver_id, created_at])
+}
+
+/// @hidden
+model mv_hub_push_message_last_contents {
+  hub_push_message_id         String @id @db.Uuid
+  hub_push_message_content_id String @db.Uuid
+
+  message hub_push_messages         @relation(fields: [hub_push_message_id], references: [id], onDelete: Cascade)
+  content hub_push_message_contents @relation(fields: [hub_push_message_content_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_push_message_content_id])
+}

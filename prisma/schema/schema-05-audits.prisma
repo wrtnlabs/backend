@@ -1,0 +1,384 @@
+/// Audit information for listing snapshots.
+///
+/// Whenever {@link hub_sellers sellers} register and modify listings 
+/// (whenever a new listing {@link hub_sale_snapshots snapshot} record is created),
+/// it requires an audit by {@link hub_administrators administrators}, and if 
+/// it fails, the sale itself is impossible. `hub_sale_audits` is an entity 
+/// that visualizes the audit of listing snapshots.
+///
+/// And the administrator can write the audit matters as a kind of 
+/// {@link bbs_articles article}, and the seller and the administrator can 
+/// continuously communicate through comments about the audit process or its results.
+/// Therefore, this `hub_sale_audits` was designed as a subtype entity of 
+/// {@link bbs_articles}.
+///
+/// In addition, this audit article records all the modifications whenever 
+/// the administrator modifies it, so that both the seller and the administrator 
+/// can view it. Due to the nature of electronic commerce where money is involved, 
+/// the potential for disputes is always prevalent, and administrators are no 
+/// exception. This is to prevent administrators from manipulating the situation by 
+/// changing their claims and editing articles in the event of a dispute.
+///
+/// In addition, it is possible for administrators to reject a review and then 
+/// reverse it and approve it, but it is impossible to reverse and reject an already 
+/// approved review. This is because the sale of the item has already begun the 
+/// moment the review is approved.
+///
+/// @namespace Audits
+/// @author Samchon
+model hub_sale_audits {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the attached listing snapshots
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// {@link hub_customers.id}
+  ///
+  /// @format uuid of the administrator customer who initiated the review
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_administrator_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  /// Affiliated supertype entity.
+  base bbs_articles @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  /// A snapshot of the property being reviewed.
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// Administrator customer who initiated the review.
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+
+  member hub_members @relation(fields: [hub_administrator_id], references: [id], onDelete: Cascade)
+
+  /// Records of rejected applications.
+  rejections hub_sale_audit_rejections[]
+
+  /// Review approval details.
+  approval hub_sale_audit_approvals?
+
+  /// Details of revisions made during review.
+  emendations hub_sale_audit_emendations[]
+
+  /// Judging status.
+  state mv_hub_sale_audit_states?
+
+  @@unique([hub_sale_snapshot_id])
+  @@index([hub_administrator_id])
+  @@index([hub_customer_id])
+}
+
+/// Information on the revision of listings.
+///
+/// This exchange requires {@link hub_sales listings} registered or modified by 
+/// {@link hub_sellers} to be reviewed by {@link hub_sale_administrators}. 
+/// During the review, the administrator and the seller can exchange 
+/// {@link hub_sale_audit_comments comments} and revise and modify the listing.
+///
+/// This entity `hub_sale_audit_emendations` is an entity that embodies 
+/// these revisions, and has information on which {@link hub_sale_snapshots snapshot} 
+/// the administrator or seller revised, and what the newly created snapshot is.
+///
+/// The revision target does not necessarily have to be the most recent snapshot, 
+/// and in some cases, it is possible to roll back or branch by revising a previous 
+/// snapshot. Of course, the snapshot to be revised must be related to the current 
+/// audit, and revisions cannot be made at all for snapshots that have passed 
+/// the previous audit.
+///
+/// In addition, revisions are only possible during the audit process, and once 
+/// the audit is {@link hub_sale_audit_approvals approved}, no further revisions 
+/// are possible. However, if the administrator rejects the audit 
+/// {@link hub_sale_audit_rejections}, the seller can make revisions and supplements 
+/// on his own and request a re-review from the administrator.
+///
+/// @namespace Audits
+/// @author Samchon
+model hub_sale_audit_emendations {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_audits.id}
+  ///
+  /// @format uuid of the attribution audit
+  hub_sale_audit_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who performed the correction.
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the listing snapshot before revision.
+  ///
+  /// The revision target snapshot does not necessarily have to be the snapshot 
+  /// at the time of the review start. It is possible to make additional revisions 
+  /// to the results of another revision, and it is also possible to go back to 
+  /// a previous revision and make revisions again.
+  ///
+  /// @format uuid
+  previous_hub_sale_snapshot_id String @db.Uuid
+
+  /// Snapshot of the revised results {@link hub_sale_snapshots.id}.
+  ///
+  /// A new snapshot created as a result of the revision by the seller or administrator.
+  ///
+  /// @format uuid
+  after_hub_sale_snapshot_id String @db.Uuid
+
+  /// Types of customers who have made corrections
+  ///
+  /// - administrator: administrator
+  /// - seller: seller
+  actor_type String @db.VarChar()
+
+  /// Additional description for revisions.
+  ///
+  /// When there is something to explain separately about this revision.
+  description String?
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  /// Attribution examination.
+  audit hub_sale_audits? @relation(fields: [hub_sale_audit_id], references: [id], onDelete: Cascade)
+
+  /// Snapshot before editing.
+  previous hub_sale_snapshots @relation("previous", fields: [previous_hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// A new snapshot created as a result of the editing.
+  after hub_sale_snapshots @relation("after", fields: [after_hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// Customer who has had editing done.
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+
+  member hub_members @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@unique([after_hub_sale_snapshot_id])
+  @@index([hub_member_id, actor_type]) // 글쓴이와 그 유형
+  @@index([hub_sale_audit_id, created_at]) // 귀속 심사와 첨삭 순서
+  @@index([previous_hub_sale_snapshot_id]) // 동일 스냅샷을 대상으로 중복 첨삭 가능
+}
+
+/// Rejection of listing snapshot review.
+///
+/// `hub_sale_auditsRejection` is an entity that represents the history of 
+/// rejection of {@link hub_administrators} for {@link hub_sale_audits listing review}.
+///
+/// Note that the administrator who {@link hub_sale_audits initiated} listing 
+/// snapshot review and the administrator who processes the rejection can be 
+/// different people. Also, if {@link hub_sellers} requests a re-review with 
+/// {@link hub_sale_audit_comments comments}, the administrator can repeatedly
+/// process the rejection.
+///
+/// @namespace Audits
+/// @author Samchon
+model hub_sale_audit_rejections {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// {@link hub_sale_audits.id} of the attribution audit.
+  ///
+  /// @format uuid
+  hub_sale_audit_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the rejected admin customer.
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Whether or not to reverse.
+  ///
+  /// Whether to confirm the current rejection and not to reverse it.
+  ///
+  /// However, this is only an expression of intent to the judge that the current 
+  /// rejection is confirmed and that there will be no future reversal and approval. 
+  /// In reality, it is possible to express intent in this way and then later 
+  /// reverse and approve it.
+  reversible Boolean @db.Boolean
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  audit    hub_sale_audits @relation(fields: [hub_sale_audit_id], references: [id], onDelete: Cascade)
+  customer hub_customers   @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members     @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_sale_audit_id, created_at])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// Approval for listing snapshot audit.
+///
+/// `hub_sale_audit_approvals` is an entity that embodies the action of 
+/// {@link hub_administrators administrators} approving 
+/// {@link hub_sale_audits listing audit}.
+///
+/// Note that the administrator who initiated the listing snapshot audit and the 
+/// administrator who processes the approval can be different people. Also, it is 
+/// possible to reject an audit and then reverse and approve it. However, it is 
+/// impossible to reverse and reverse an audit that has already been approved. 
+/// This is because when it is approved, {@link hub_sales listing} is actually 
+/// put on sale.
+///
+/// @namespace Audits
+/// @author Samchon
+model hub_sale_audit_approvals {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_administrator_id String @db.Uuid
+
+  /// {@link hub_sale_audits.id} of the attribution audit.
+  ///
+  /// @format uuid
+  hub_sale_audit_id String @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the snapshots to be approved for audit.
+  ///
+  /// When approving an audit, it is not necessary to approve only the last {@link hub_sale_audit_emendations annotations}. In some cases, the original snapshot or a previous annotation can be approved and {@link hub_sale_snapshots.activated_at activated}.
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the approved admin customer.
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// 수수료율.
+  ///
+  /// @minimum 0
+  /// @exclusiveMaximum 1
+  fee_ratio Float @db.DoublePrecision
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  /// Attribution examination.
+  audit hub_sale_audits @relation(fields: [hub_sale_audit_id], references: [id], onDelete: Cascade)
+
+  /// The snapshot to be activated.
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// Approved administrator customers.
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+
+  member hub_members @relation(fields: [hub_administrator_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_audit_id])
+  @@unique([hub_sale_snapshot_id])
+  @@index([hub_administrator_id])
+  @@index([hub_customer_id])
+}
+
+/// Comments written on the review article.
+///
+/// `hub_sale_audit_comments` is a subtype entity of {@link bbs_article_comments}, 
+/// and is used when the administrator and {@link hub_sellers sellers} communicate 
+/// with each other regarding the {@link hub_sale_audits review} initiated by 
+/// {@link hub_administrators administrators}.
+///
+/// This also applies after the review is completed, and even for a review that 
+/// has been rejected once, the seller can request a re-review by leaving a comment. 
+/// Of course, most sellers will follow the administrator's guide before requesting 
+/// a re-review and do their own editing.
+///
+/// @namespace Audits
+/// @author Samchon
+model hub_sale_audit_comments {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who wrote the comment.
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// The type of customer who wrote the comment.
+  ///
+  /// - administrator: administrator
+  /// - seller: seller
+  actor_type String @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  /// Affiliated supertype entity.
+  base bbs_article_comments @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  /// Customers who wrote comments.
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+
+  member hub_members @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_member_id, actor_type])
+}
+
+/// The review status of the listing
+///
+/// If the values of `rejected_at` and `approved_at` are `null`, 
+/// the review has been initiated.
+///
+/// Otherwise the value of `rejected_at` is not null, the review has been rejected.
+/// 
+/// When the value of `approved_at` is not null, the review has been approved.
+///
+/// @author Asher
+/// @hidden
+model mv_hub_sale_audit_states {
+  hub_sale_audit_id String    @id @db.Uuid
+  rejected_at       DateTime? @db.Timestamptz
+  approved_at       DateTime? @db.Timestamptz
+
+  audit hub_sale_audits @relation(fields: [hub_sale_audit_id], references: [id], onDelete: Cascade)
+}

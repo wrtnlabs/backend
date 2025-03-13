@@ -1,0 +1,276 @@
+/// Hub channel information.
+///
+/// `hub_channels` is a concept that visualizes distribution channels in the 
+/// API brokerage market. In this system, a different channel means a different site or 
+/// application. Therefore, Wrtn Generative Hub (https://hub.wrtn.com, tentative name) 
+/// is also a channel. 
+/// 
+/// Of course, Generative Hub currently has only one channel, but it is prepared in 
+/// advance for future scalability. Like {@link hub_external_users}, it is a concept 
+/// designed in advance for possible future partnerships. For reference, if Wrtn launches 
+/// another site (application) with a different brand name other than Generative Hub, or 
+/// Wrtn uses it for embedding (`<iframe/>`) when you are launching a simple hub site and 
+/// distributing it to partners, you will also need a new channel.
+/// 
+/// > The basic code is `wrtn`
+/// 
+/// @namespace Systematic
+/// @erd SaleContents
+/// @author Samchon
+model hub_channels {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Identifier code.
+  code String @db.VarChar
+
+  /// Channel name.
+  name String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record edit.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  categories                     hub_channel_categories[]
+  customers                      hub_customers[]
+  citizens                       hub_citizens[]
+  members                        hub_members[]
+  member_emails                  hub_member_emails[]
+  hub_external_users             hub_external_users[]
+  studio_accounts                studio_accounts[]
+  studio_enterprises             studio_enterprises[]
+  hub_member_authenticate_tokens hub_authenticate_tokens[]
+  studio_channel_categories      studio_channel_categories[]
+  hub_member_whitelist           hub_member_elites[]
+  hub_member_blacklist           hub_member_villains[]
+  hub_customer_email_verifications hub_customer_email_verifications[]
+
+  @@unique([code])
+  @@unique([name])
+  @@index([created_at])
+}
+
+/// Channel category information.
+///
+/// `hub_channel_categories` is a concept that means a classification category 
+/// within a specific channel, and it is exactly the same as the concept that is 
+/// usually referred to as "category" in shopping malls.
+///
+/// And `hub_channel_categories` means a "corner", which is an independent spatial 
+/// information in offline markets, and unlike {@link hub_sales items}, which cannot 
+/// be simultaneously classified, one item can be simultaneously classified in 
+/// multiple categories.
+///
+/// For example, beef and grapes can belong to the fruit corner and the meat corner, 
+/// respectively, but they do not belong to any of the categories, and can form 
+/// independent M: N relationships with various categories according to the 
+/// characteristics of each product.
+///
+/// Product | Corner | Category
+/// -------|---------|------------------------
+/// Beef | Meat Corner | Frozen Food, Meat, Specialty Food
+/// Grapes | Fruit Corner | Fresh food, convenience food
+///
+/// In addition, categories have a 1: N recursive structure, so hierarchical 
+/// expressions are possible as shown below. Also, categories can be set differently 
+/// for each {@link hub_channels channel}, so each {@link hub_channels channel} can 
+/// freely set the category classification they want.
+///
+/// - Grocery > Meat > Frozen
+/// - Electronic devices > Laptop > 15-inch
+/// - Miscellaneous goods > Wallets
+///
+/// For reference, since the API supports (or plans to support) a merge function 
+/// between multiple categories, there will be no particular burden in constantly
+/// editing categories.
+///
+/// @namespace Systematic
+/// @erd SaleContents
+/// @author Samchon
+model hub_channel_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliated channel.
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_channel_categories.id} of the parent category.
+  ///
+  /// If it corresponds to a subcategory of a specific category.
+  ///
+  /// @format uuid
+  parent_id String? @db.Uuid
+
+  /// English name.
+  ///
+  /// English name participates in the unique constraint.
+  name String @db.VarChar
+
+  /// Category background color.
+  background_color String? @db.VarChar
+
+  /// Category background image.
+  ///
+  /// @format uri
+  background_image_url String? @db.VarChar(80000)
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel  hub_channels             @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  parent   hub_channel_categories?  @relation("hub_channel_categories_children", fields: [parent_id], references: [id], onDelete: Cascade)
+  children hub_channel_categories[] @relation("hub_channel_categories_children")
+
+  names                        hub_channel_category_names[]
+  hub_sale_snapshot_categories hub_sale_snapshot_categories[]
+
+  @@unique([hub_channel_id, parent_id, name])
+}
+
+model hub_channel_category_names {
+  id String @id @db.Uuid
+
+  hub_channel_category_id String @db.Uuid
+
+  name String @db.VarChar
+
+  lang_code String @db.VarChar
+
+  category hub_channel_categories @relation(fields: [hub_channel_category_id], references: [id], onDelete: Cascade)
+
+  @@unique([lang_code, hub_channel_category_id])
+  @@unique([lang_code, name, hub_channel_category_id])
+}
+
+/// Section information.
+///
+/// `hub_sections` is an entity designed to express section information in the market.
+///
+/// If we compare the section mentioned here to a mart, it means a spatially 
+/// separated area in the store, such as "fruit corner" or "meat corner." Currently, 
+/// the only section that exists in Luton's Generative Hub is "API Market", 
+/// but it is a concept designed in advance for future expansion.
+///
+/// And unlike {@link hub_sales listing}, which can be simultaneously classified,
+/// sections can only be classified for one listing. In other words, one listing 
+/// can only belong to one section.
+///
+/// > The basic code is `generative`
+///
+/// @namespace Systematic
+/// @author Samchon
+model hub_sections {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Identifier code.
+  code String @db.VarChar
+
+  /// Section name.
+  name String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  hub_sales                       hub_sales[]
+  hub_coupon_criteria_of_sections hub_coupon_criteria_of_sections[]
+  studio_applications             studio_applications[]
+
+  @@unique([code])
+  @@unique([name])
+  @@index([created_at])
+}
+
+/// Channel-specific category information of the studio.
+///
+/// `studio_channel_categories` is an entity that visualizes the channel-specific 
+/// classification categories in the studio, and it is exactly the same as the 
+/// concept of "category" that is commonly referred to in shopping malls.
+///
+/// And compared to {@link hub_channel_categories}, the only difference is whether 
+/// the target is an API brokerage exchange or a studio asset, but their roles are 
+/// the same.
+///
+/// @namespace Systematic
+/// @author Samchon
+model studio_channel_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliated channel.
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link studio_channel_categories.id} of the parent category.
+  ///
+  /// If it corresponds to a subcategory of a specific category.
+  ///
+  /// @format uuid
+  parent_id String? @db.Uuid
+
+  /// Category name.
+  name String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel  hub_channels                @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  parent   studio_channel_categories?  @relation("studio_channel_categories_children", fields: [parent_id], references: [id], onDelete: Cascade)
+  children studio_channel_categories[] @relation("studio_channel_categories_children")
+
+  @@unique([hub_channel_id, parent_id, name])
+}

@@ -1,0 +1,369 @@
+/// Meta LLM chat session information.
+///
+/// `studio_meta_chat_sessions` is an entity that visualizes Meta LLM chat sessions 
+/// and their history.
+///
+/// Therefore, `studio_meta_chat_sessions` contains the most basic information of 
+/// the chat session, such as the {@link hub_customers initiator customer} and the 
+/// time, and the sub-entities {@link studio_meta_chat_session_connections} and
+/// {@link studio_meta_chat_session_connection_messages} contain the session 
+/// connection information and the history of mutually transmitted messages.
+///
+/// For reference, our Meta LLM chat session uses the WebSocket protocol and the 
+/// RPC (Remote Procedure Call) concept of 
+/// [TGrid](https://tgrid.com/docs/remote-procedure-call/). Therefore, the sub-entity
+/// {@link studio_meta_chat_session_connections} records the client's 
+/// connection/disconnection information to the websocket server, and 
+/// {@link studio_meta_chat_session_connection_messages} records the RPC function 
+/// calls and return history between the server and client.
+///
+/// @namespace Meta
+/// @author Samchon
+model studio_meta_chat_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who opened the chat session
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String? @db.Uuid
+
+  /// Chat session title.
+  ///
+  /// Elements that can be set later.
+  title String? @db.VarChar(255)
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime? @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  /// Top fixed date and time.
+  pinned_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+
+  member hub_members? @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  connections     studio_meta_chat_session_connections[]
+  mv_last_message mv_studio_meta_chat_session_last_messages?
+  shares          studio_meta_chat_session_shares[]
+  storages        studio_meta_chat_session_storages?
+  of_goods        studio_meta_chat_session_goods[]
+  token_usages    studio_meta_chat_session_token_usages[]
+
+  @@index([hub_customer_id, created_at])
+  @@index([hub_customer_id, pinned_at, created_at])
+  @@index([hub_customer_id, updated_at])
+  @@index([hub_customer_id, pinned_at, updated_at])
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+/// Connection information to Meta LLM chat sessions.
+///
+/// `studio_meta_chat_session_connections` is an entity that visualizes the
+/// connection information of {@link hub_customers customers} to the
+/// {@link studio_meta_chat_sessions Meta LLM chat sessions}.
+///
+/// That is, whenever a customer connects to a Meta LLM chat session using the
+/// WebSocket protocol, a `studio_meta_chat_session_connections` record is created
+/// for that session, and when a customer disconnects the WebSocket connection,
+/// the time is recorded in `disconnected_at`.
+///
+/// @namespace Meta
+/// @author Samchon
+model studio_meta_chat_session_connections {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_meta_chat_sessions.id} of the attached chat session
+  ///
+  /// @format uuid
+  studio_meta_chat_session_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who connected to the chat session
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String? @db.Uuid
+
+  /// Connection time.
+  connected_at DateTime @db.Timestamptz
+
+  /// Time of survival confirmation.
+  survived_at DateTime? @db.Timestamptz
+
+  /// Disconnection time.
+  disconnected_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  session  studio_meta_chat_sessions @relation(fields: [studio_meta_chat_session_id], references: [id], onDelete: Cascade)
+  customer hub_customers             @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members?              @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  messages studio_meta_chat_session_connection_messages[]
+  logs     studio_meta_chat_session_connection_logs[]
+
+  @@index([studio_meta_chat_session_id, connected_at, disconnected_at], map: "idx_studio_meta_chat_session_connections_fk_connected_at")
+  @@index([studio_meta_chat_session_id, disconnected_at], map: "idx_studio_meta_chat_session_connections_disconnected_at")
+  @@index([hub_customer_id])
+}
+
+/// Speech data during a Meta LLM chat session connection.
+///
+/// `studio_meta_chat_session_connection_messages` is an entity that visualizes
+/// messages that occurred in a {@link studio_meta_chat_sessions Meta LLM chat session}.
+/// To be precise, it records which
+/// {@link studio_meta_chat_session_connections WebSocket connection} within the
+/// chat session they occurred in.
+///
+/// And since our Meta LLM chat session uses TGrid's
+/// [RPC (Remote Procedure Call)](https://tgrid.com/docs/remote-procedure-call/)
+/// concept in the WebSocket protocol, this `studio_meta_chat_session_connection_messages`
+/// is also an entity that encompasses the history information `data` for RPC
+/// function calls.
+///
+/// @namespace Meta
+/// @author Samchon
+model studio_meta_chat_session_connection_messages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_meta_chat_session_connections.id}
+  ///
+  /// @format uuid of the attached chat session connection
+  studio_meta_chat_session_connection_id String @db.Uuid
+
+  /// Who is the speaker?
+  ///
+  /// - customer: customer (human)
+  /// - agent: LLM agent (robot)
+  speaker String @db.VarChar
+
+  /// Discriminator type.
+  type String @db.VarChar
+
+  /// Arguments of RPC.
+  ///
+  /// Encrypted due to personal information reason.
+  arguments String
+
+  /// Return value of error data.
+  ///
+  /// Encrypted due to personal information reason.
+  value String?
+
+  /// Time of ignition.
+  created_at DateTime @db.Timestamptz
+
+  /// Completion time of RPC.
+  completed_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  connection      studio_meta_chat_session_connections       @relation(fields: [studio_meta_chat_session_connection_id], references: [id], onDelete: Cascade)
+  mv_last_message mv_studio_meta_chat_session_last_messages?
+  shares          studio_meta_chat_session_shares[]
+
+  @@index([studio_meta_chat_session_connection_id, created_at, completed_at], map: "idx_studio_meta_chat_session_connection_messages_fk_created_at")
+  @@index([studio_meta_chat_session_connection_id, completed_at], map: "idx_studio_meta_chat_session_connection_messages_completed_at")
+}
+
+/// Sharing of Meta LLM chat sessions.
+///
+/// @namespace Meta
+/// @author Samchon
+model studio_meta_chat_session_shares {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id} who've shared the chat session.
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// {@link studio_meta_chat_sessions.id} of the chat session shared.
+  studio_meta_chat_session_id String @db.Uuid
+
+  /// {@link studio_meta_chat_session_connection_messages.id} of the message shared.
+  ///
+  /// If you specify the message, the chat session will be shared to that message.
+  studio_meta_chat_session_connection_message_id String? @db.Uuid
+
+  /// Title of the shared chat session.
+  title String? @db.VarChar(1024)
+
+  /// Time of sharing record creation.
+  created_at DateTime @db.Timestamptz
+
+  /// Time of sharing record modification.
+  updated_at DateTime @db.Timestamptz
+
+  /// Time of deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers                                 @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  session  studio_meta_chat_sessions                     @relation(fields: [studio_meta_chat_session_id], references: [id], onDelete: Cascade)
+  message  studio_meta_chat_session_connection_messages? @relation(fields: [studio_meta_chat_session_connection_message_id], references: [id], onDelete: SetNull)
+  member   hub_members                                   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_customer_id])
+  @@index([studio_meta_chat_session_id, created_at])
+  @@index([studio_meta_chat_session_connection_message_id])
+}
+
+/// @hidden
+model studio_meta_chat_session_connection_logs {
+  id                                     String @id @db.Uuid
+  studio_meta_chat_session_connection_id String @db.Uuid
+
+  /// Detailed Data.
+  ///
+  /// Encrypted because it may contain personal information.
+  data       String
+  created_at DateTime @db.Timestamptz
+
+  connection studio_meta_chat_session_connections @relation(fields: [studio_meta_chat_session_connection_id], references: [id], onDelete: Cascade)
+
+  @@index([studio_meta_chat_session_connection_id, created_at])
+}
+
+/// The goods used in the chat session.
+///
+/// The {@link studio_meta_chat_sessions} represents a super A.I. 
+/// chatbot that performing the LLM (Large Language Model) function
+/// calling, and the functions to call are coming from the
+/// {@link hub_order_goods}. And this `studio_meta_chat_session_goods`
+/// entity represents the goods used in the chat session.
+///
+/// For reference, the goods used in the chat session must be on the
+/// contract. If the contract is not valid or its period is expired,
+/// the session also be expired.
+///
+/// @namespace Meta
+/// @author Samchon
+model studio_meta_chat_session_goods {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// Belonged session's {@link studio_meta_chat_sessions.id}
+  studio_meta_chat_session_id String @db.Uuid
+
+  /// Target good's {@link hub_order_goods.id}
+  hub_order_good_id String @db.Uuid
+
+  /// Sequence of the good in the session.
+  sequence Int
+
+  //----
+  // RELATIONS
+  //----
+  session studio_meta_chat_sessions @relation(fields: [studio_meta_chat_session_id], references: [id], onDelete: Cascade)
+  good    hub_order_goods           @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_meta_chat_session_id, hub_order_good_id])
+  @@index([hub_order_good_id])
+}
+
+/// @hidden
+model studio_meta_chat_session_storages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_meta_chat_sessions.id} of the target session
+  ///
+  /// @format uuid
+  studio_meta_chat_session_id String @db.Uuid
+
+  /// Data stored in the storage.
+  data String?
+
+  //----
+  // RELATIONS
+  //----
+  session studio_meta_chat_sessions @relation(fields: [studio_meta_chat_session_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_meta_chat_session_id])
+}
+
+/// @hidden
+model studio_meta_chat_session_token_usages {
+  id                          String @id @db.Uuid
+  studio_meta_chat_session_id String @db.Uuid
+  type                        String @map("kind") @db.VarChar
+  input_price                 Float  @db.DoublePrecision
+  input_total                 Float  @db.DoublePrecision
+  input_cached                Float  @db.DoublePrecision
+  output_price                Float  @db.DoublePrecision
+  output_total                Float  @db.DoublePrecision
+  output_reasoning            Float? @db.DoublePrecision
+  output_accepted_prediction  Float? @db.DoublePrecision
+  output_rejected_prediction  Float? @db.DoublePrecision
+
+  session studio_meta_chat_sessions @relation(fields: [studio_meta_chat_session_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_meta_chat_session_id, type])
+}
+
+/// @hidden
+model mv_studio_meta_chat_session_last_messages {
+  studio_meta_chat_session_id                    String @id @db.Uuid
+  studio_meta_chat_session_connection_message_id String @db.Uuid
+
+  session studio_meta_chat_sessions                    @relation(fields: [studio_meta_chat_session_id], references: [id], onDelete: Cascade, map: "fk_mv_studio_meta_chat_session_last_messages_session")
+  message studio_meta_chat_session_connection_messages @relation(fields: [studio_meta_chat_session_connection_message_id], references: [id], onDelete: Cascade, map: "fk_mv_studio_meta_chat_session_last_messages_message")
+
+  @@unique([studio_meta_chat_session_connection_message_id])
+}

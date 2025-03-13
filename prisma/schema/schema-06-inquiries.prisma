@@ -1,0 +1,326 @@
+/// Inquiry about listing snapshots.
+///
+/// `hub_sale_snapshot_inquiries` is a subtype entity of {@link bbs_articles}, 
+/// and it embodies the inquiry written by {@link hub_customers customers} 
+/// about listings registered by {@link hub_sellers sellers} 
+/// (only in units of {@link hub_sale_snapshots snapshots} for accurate tracking).
+///
+/// In addition, since customers are waiting for the seller's response after writing 
+/// an inquiry, it provides a reference for whether the seller has read the inquiry 
+/// written by the customer. Of course, since the inquiry itself is a subtype of 
+/// an article, it is also possible for sellers to communicate with each other as 
+/// {@link hub_sale_snapshot_inquiry_comments comments} before an official response.
+///
+/// However, comments themselves are only possible for customers, even if they 
+/// are not the ones who wrote the article. Of course, sellers cannot write if they 
+/// are not the ones who wrote the inquiry.
+///
+/// @namespace Inquiries
+/// @author Samchon
+model hub_sale_snapshot_inquiries {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshots} of the belonging listing snapshots
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// Customer writing the query {@link hub_customers.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// The type of the question article.
+  ///
+  /// - `question`: question
+  /// - `review`: review
+  type String @db.VarChar
+
+  /// The date and time the seller first viewed the inquiry.
+  read_by_seller_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  base     bbs_articles       @relation(fields: [id], references: [id], onDelete: Cascade)
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  customer hub_customers      @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members        @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  of_question hub_sale_snapshot_questions?
+  of_review   hub_sale_snapshot_reviews?
+  answer      hub_sale_snapshot_inquiry_answers?
+  like        hub_sale_snapshot_inquiry_likes[]
+
+  @@index([hub_sale_snapshot_id])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// Questions about listing snapshots.
+///
+/// `hub_sale_snapshot_questions` is a subtype entity of 
+/// {@link hub_sale_snapshot_inquiries}, and is used when a 
+/// {@link hub_customers customer} wants to ask something about a listing 
+/// (the {@link hub_salesnapshots snapshot at that time}) registered by a 
+/// {@link hub_sellers seller}.
+///
+/// And like most exchanges, `hub_sale_snapshot_questions` also provides a `secret`
+/// attribute, which allows you to write a "secret message" that can only be viewed 
+/// by the customer who wrote the question and the seller.
+///
+/// @namespace Inquiries
+/// @author Samchon
+model hub_sale_snapshot_questions {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Whether it is a secret or not.
+  secret Boolean @db.Boolean
+
+  //----
+  // RELATIONS
+  //----
+  base hub_sale_snapshot_inquiries @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+/// Reviews for the listing snapshot.
+///
+/// `hub_sale_snapshot_reviews` is a subtype entity of 
+/// {@link hub_sale_snapshot_inquiries}, and is used when 
+/// {@link hub_customers customers} purchase a listing 
+/// ({@link hub_sale_snapshots snapshot at that time}) registered by 
+/// {@link hub_sellers sellers} as a {@link hub_order_goods product} and want to 
+/// leave a review and evaluation for it.
+///
+/// Note that `hub_sale_snapshot_reviews` and {@link hub_order_goods} are in 
+/// a logarithmic relationship of N: 1, but that does not mean that customers 
+/// can continue to write reviews for the same product indefinitely. Perhaps 
+/// there is a restriction that if they write a review once, they can write 
+/// an additional review after a month?
+///
+/// @namespace Inquiries
+/// @author Samchon
+model hub_sale_snapshot_reviews {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_order_goods.id}
+  ///
+  /// @format uuid of the ordered product
+  hub_order_good_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  base hub_sale_snapshot_inquiries @relation(fields: [id], references: [id], onDelete: Cascade)
+  good hub_order_goods             @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_order_good_id])
+}
+
+/// Content snapshot of reviews for a listing snapshot.
+///
+/// `hub_sale_snapshot_review_snapshots` is a subtype entity of 
+/// {@link bbs_article_snapshots}, designed to add a "review score" item to the 
+/// content of {@link hub_sale_snapshot_reviews review articles}.
+///
+/// That is, after a customer writes a review article, he or she can edit it and 
+/// change the review score at any time.
+///
+/// @namespace Inquiries
+/// @author Samchon
+model hub_sale_snapshot_review_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Evaluation score.
+  ///
+  /// @minimum 0
+  /// @maximum 100
+  score Float @db.DoublePrecision
+
+  //----
+  // RELATIONS
+  //----
+  base bbs_article_snapshots @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+/// Answers to inquiries in the listing snapshot.
+///
+/// `hub_sale_snapshot_inquiry_answers` is an entity that embodies the official 
+/// answers written by {@link hub_sellers sellers} to the 
+/// {@link hub_sale_snapshot_inquiries inquiries} written by 
+/// {@link hub_customers customers}.
+///
+/// Of course, in addition to the sellers writing official answers like this, 
+/// they can also communicate with the inquirer and other customers through 
+/// {@link bbs_article_comments comments} in the attributed inquiries.
+///
+/// > Comments on answers are not allowed. Encourage them to write comments on inquiries.
+///
+/// @namespace Inquiries
+/// @author Samchon
+model hub_sale_snapshot_inquiry_answers {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Inquiry for Attribution {@link hub_sale_snapshot_inquiries.id}
+  ///
+  /// @format uuid
+  hub_sale_snapshot_inquiry_id String @db.Uuid
+
+  /// Answer author Customer {@link hub_customers.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_seller_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  base     bbs_articles                @relation(fields: [id], references: [id], onDelete: Cascade)
+  inquiry  hub_sale_snapshot_inquiries @relation(fields: [hub_sale_snapshot_inquiry_id], references: [id], onDelete: Cascade)
+  customer hub_customers               @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members                 @relation(fields: [hub_seller_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_snapshot_inquiry_id])
+  @@index([hub_seller_id])
+  @@index([hub_customer_id])
+}
+
+/// Comments on the inquiry.
+///
+/// Comments on the inquiry can be freely written by anyone, even if they are not 
+/// the parties involved.
+///
+/// @namespace Inquiries
+/// @author Samchon
+model hub_sale_snapshot_inquiry_comments {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Commenter Customer {@link hub_customers.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Type of commenter
+  ///
+  /// - customer: customer
+  /// - seller: seller
+  actor_type String @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  base     bbs_article_comments @relation(fields: [id], references: [id], onDelete: Cascade)
+  customer hub_customers        @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members          @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_member_id, actor_type])
+}
+
+/// Like the inquiry.
+///
+/// You can freely write a like for the inquiry, even if you are not a party to it.
+///
+/// @namespace Inquiries
+/// @author Asher
+model hub_sale_snapshot_inquiry_likes {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Liked Inquiry {@link hub_sale_snapshot_inquiries.id}
+  ///
+  /// @format uuid
+  hub_sale_snapshot_inquiry_id String @db.Uuid
+
+  /// Customers who liked {@link hub_customers.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  inquiry  hub_sale_snapshot_inquiries @relation(fields: [hub_sale_snapshot_inquiry_id], references: [id], onDelete: Cascade)
+  customer hub_customers               @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members                 @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_inquiry_aggregate_per_days {
+  hub_sale_snapshot_id String @id @db.Uuid
+
+  date DateTime @db.Date
+
+  question_count Int @db.Integer
+  review_count   Int @db.Integer
+
+  average Float @db.DoublePrecision
+
+  snapshots hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard  v_date_days        @relation(fields: [date], references: [date], onDelete: Cascade)
+}

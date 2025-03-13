@@ -1,0 +1,1456 @@
+/// Seller **sales** products (API).
+///
+/// `hub_sales` is an entity that embodies the "API product sales" (sales) 
+/// information registered by {@link hub_sellers Seller}.
+///
+/// And the main information of the listing is not recorded in the main 
+/// `hub_sales`, but in the subordinate {@link hub_sale_snapshots}. When the 
+/// seller changes the listing that has already been registered, the existing 
+/// `hub_sales` record is not changed, but a new snapshot record is created. 
+/// 
+/// This is to preserve the customer's purchase history at that time without any 
+/// flaws, even if the seller changes the 
+/// {@link hub_sale_snapshot_unit_stocks stocks} or price of a specific listing 
+/// after {@link hub_customers customer} has purchased it. 
+/// 
+/// In addition, it is to support the seller to perform so-called A/B tests, 
+/// which measure the performance of each case by changing the stocks or price.
+///
+/// @namespace Sales 
+/// @erd Systematic 
+/// @erd SaleContents 
+/// @erd Audits 
+/// @author Samchon
+model hub_sales {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sections.id} in the attributed section
+  ///
+  /// @format uuid
+  hub_section_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the seller customer who registered the item
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_seller_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Sales start date.
+  ///
+  /// If this value is NULL, sales have not started yet.
+  opened_at DateTime? @db.Timestamptz
+
+  /// The sale ends when.
+  ///
+  /// If this value is NULL, the sale will continue forever.
+  closed_at DateTime? @db.Timestamptz
+
+  /// Suspended.
+  ///
+  /// The seller has temporarily suspended API sales for some reason.
+  ///
+  /// Customers can still view the listing on the listing and details page,
+  /// but the listing will be labeled "This listing is suspended by the seller."
+  paused_at DateTime? @db.Timestamptz
+
+  /// Stopped selling.
+  ///
+  /// The seller has stopped selling for some reason.
+  ///
+  /// Customers cannot view the listing or details page at all.
+  ///
+  /// At first glance, it looks similar to a soft delete, but the difference
+  /// is that the seller and the manager can still view it and resume selling
+  /// at any time.
+  suspended_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  /// Last snapshot information.
+  ///
+  /// Logically, it is always NOT NULL.
+  mv_last mv_hub_sale_last_snapshots?
+
+  /// Snapshot list.
+  ///
+  /// Created once when you create an item, and accumulated each time you edit an item.
+  ///
+  /// @minItems 1
+  snapshots hub_sale_snapshots[]
+
+  section  hub_sections  @relation(fields: [hub_section_id], references: [id], onDelete: Cascade)
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_seller_id], references: [id], onDelete: Cascade)
+
+  mv_ranking                   mv_hub_sale_call_rankings?
+  replica                      hub_sale_replicas?
+  bookmarks                    hub_bookmark_sales[]
+  hub_sale_collection_elements hub_sale_collection_elements[]
+  mv_hub_sale_rankings         mv_hub_sale_rankings?
+  hub_coupon_criteria_of_sales hub_coupon_criteria_of_sales[]
+
+  @@index([hub_section_id])
+  @@index([hub_seller_id])
+  @@index([hub_customer_id])
+  @@index([created_at])
+  @@index([opened_at, closed_at, suspended_at])
+}
+
+/// Listing snapshot information.
+///
+/// `hub_sale_snapshots` is an entity that represents snapshots of
+/// {@link hub_sales listings}. And `hub_sale_snapshots` records are created
+/// whenever a new listing is created or an existing listing is modified.
+///
+/// Note that listing editing (creating a new snapshot record) is possible
+/// not only by {@link hub_sellers sellers} but also by
+/// {@link hub_administrators administrators}. This is the case when
+/// an administrator {@link hub_sale_audits reviews} the listing and adds
+/// {@link hub_sale_audit_emendations}.
+///
+/// @namespace Sales
+/// @erd SaleContents
+/// @erd Systematic
+/// @erd Audits
+/// @erd Inquiries
+/// @erd Orders
+/// @author Samchon
+model hub_sale_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sales.id} of the property
+  ///
+  /// @format uuid
+  hub_sale_id String @db.Uuid
+
+  /// Version name.
+  ///
+  /// You can set a different value than `ISwaggerInfo.version`.
+  ///
+  /// That is, the version name in the server spec (Swagger document)
+  /// and the version name in the product may be different.
+  version String
+
+  /// System prompt.
+  ///
+  /// The prompt message that the system will show to the user.
+  system_prompt String? @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Activation time of the snapshot.
+  ///
+  /// The time when the audit for this snapshot was approved and first activated.
+  ///
+  /// This information can be inferred from {@link hub_sale_audit_approvals},
+  /// but is recorded in duplicate for quick record search.
+  activated_at DateTime? @db.Timestamptz
+
+  /// Expiration point for all APIs within the snapshot.
+  expired_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  /// Latest snapshot information.
+  ///
+  /// An irregular table for quickly finding the most recent snapshot.
+  ///
+  /// NOT NULL means the current snapshot is the most recent.
+  mv_last mv_hub_sale_last_snapshots? @relation("rel_mv_hub_sale_last_snapshots_last")
+
+  /// The starting point snapshot information of the latest review.
+  ///
+  /// The snapshot that became the starting point of the last review.
+  ///
+  /// If the review was revised during the review, this value may be different
+  /// from `mv_last`.
+  ///
+  /// Conversely, if the review has not yet started, this property is assigned
+  /// a `null` value.
+  mv_last_audited mv_hub_sale_last_snapshots? @relation("rel_mv_hub_sale_last_snapshots_last_audited")
+
+  /// Latest snapshot information.
+  ///
+  /// An irregular table for quickly finding the latest approved snapshot.
+  ///
+  /// NOT NULL, meaning the current snapshot is the latest approved version.
+  mv_approved mv_hub_sale_last_snapshots? @relation("rel_mv_hub_sale_last_snapshots_approved")
+
+  /// The most recently approved snapshot review information.
+  ///
+  /// The snapshot that started the most recent approved review.
+  ///
+  /// If the snapshot was updated during the review due to revisions,
+  /// this value may be different from `mv_approve`.
+  mv_approved_audited mv_hub_sale_last_snapshots? @relation("rel_mv_hub_sale_last_snapshots_approved_audited")
+
+  sale     hub_sales                    @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+  contents hub_sale_snapshot_contents[]
+
+  /// @minItems 1
+  units            hub_sale_snapshot_units[]
+  inquiries        hub_sale_snapshot_inquiries[]
+  to_categories    hub_sale_snapshot_categories[]
+  cart_commodities hub_cart_commodities[]
+  to_user_prompts  hub_sale_snapshot_user_prompts[]
+
+  /// Review history for this snapshot.
+  audit hub_sale_audits?
+
+  /// Review approval history for this snapshot.
+  approval hub_sale_audit_approvals?
+
+  /// If this snapshot is the result of editing.
+  emended hub_sale_audit_emendations? @relation("after")
+
+  /// List of revisions to this snapshot.
+  ///
+  /// List of all revisions made during the review process for this snapshot.
+  emendations hub_sale_audit_emendations[] @relation("previous")
+
+  /// List of search tags.
+  replicas                                         hub_sale_replicas[]
+  mv_hub_order_good_snapshots                      mv_hub_order_good_snapshots[]
+  mv_hub_order_good_units                          mv_hub_order_good_units[]
+  hub_sale_snapshot_view_history                   hub_sale_snapshot_view_histories[]
+  mv_hub_sale_snapshot_view_aggregate_per_hours    mv_hub_sale_snapshot_view_aggregate_per_hours[]
+  mv_view_per_days                                 mv_hub_sale_snapshot_view_aggregate_per_days[]
+  mv_hub_sale_snapshot_view_aggregate_per_weeks    mv_hub_sale_snapshot_view_aggregate_per_weeks[]
+  mv_hub_sale_snapshot_view_aggregate_per_months   mv_hub_sale_snapshot_view_aggregate_per_months[]
+  mv_hub_sale_snapshot_view_aggregate_per_quarters mv_hub_sale_snapshot_view_aggregate_per_quarters[]
+  mv_hub_sale_snapshot_view_aggregate_per_years    mv_hub_sale_snapshot_view_aggregate_per_years[]
+  mv_hub_sale_snapshot_inquiry_aggregate_per_days  mv_hub_sale_snapshot_inquiry_aggregate_per_days[]
+
+  @@index([hub_sale_id, created_at])
+  @@index([hub_sale_id, activated_at, expired_at])
+}
+
+/// User prompt information for the snapshot.
+///
+/// `hub_sale_snapshot_user_prompts` is an entity that represents the
+/// user prompt information for the snapshot.
+///
+/// The user prompt information is a message that the system shows to the user
+/// when the user enters the listing page. It is a message that the seller
+///
+/// @namespace Sales
+/// @erd SaleContents
+/// @author Asher
+model hub_sale_snapshot_user_prompts {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshots} of the attributed snapshot
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// The icon URL to be displayed.
+  icon_url String? @db.VarChar
+
+  /// Sequence.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  snapshot      hub_sale_snapshots                         @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  to_translates hub_sale_snapshot_user_prompt_translates[]
+
+  @@unique([hub_sale_snapshot_id, sequence])
+}
+
+/// @hidden
+model hub_sale_snapshot_user_prompt_translates {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_user_prompts.id}
+  ///
+  /// @format uuid
+  hub_sale_snapshot_user_prompt_id String @db.Uuid
+
+  /// Examples of prompts that the user can enter.
+  value String @db.VarChar
+
+  /// Whether it's original swagger or not.
+  original Boolean @db.Boolean
+
+  /// Swagger language code.
+  lang_code String? @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  prompt hub_sale_snapshot_user_prompts @relation(fields: [hub_sale_snapshot_user_prompt_id], references: [id], onDelete: Cascade)
+}
+
+/// Product composition information handled by the listing.
+///
+/// `hub_sale_snapshot_units` is an entity that visualizes the "individual product"
+/// information handled by the listing. And the "individual product" mentioned here
+/// is a concept corresponding to the individual server unit in the hub system,
+/// that is, the Swagger document.
+///
+/// For reference, the reason why `hub_sale_snapshot_units` is separated from
+/// {@link hub_sale_snapshots} by a 1: N logarithmic relationship is because
+/// there are often cases where multiple products are sold in one listing.
+/// This is the case with the so-called "bundled products".
+///
+/// - Bundled products in general products (laptop set)
+///   - Body
+///   - Keyboard
+///   - Mouse
+///   - Apple Care (free A/S rights)
+/// - Bundled products in hub system (writer AI set)
+///   - Writing server
+///   - Image generation server
+///   - Logo/cover generation server
+///
+/// And `hub_sale_snapshot_units` does not mean the final stocks that the
+/// customer will purchase in itself.
+///
+/// The final stocks can only be seen after selecting all of the given
+/// {@link hub_sale_snapshot_unit_options options} and their
+/// {@link hub_sale_snapshot_unit_option_candidates candidate values}.
+///
+/// For example, even if you buy a laptop, the final stocks are determined
+/// only after selecting all of the options (CPU / RAM / SSD) in it.
+///
+/// @namespace Sales
+/// @erd Orders
+/// @erd Applications
+/// @author Samchon
+model hub_sale_snapshot_units {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the attributed snapshot
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id} of the parent unit
+  ///
+  /// Customers who purchased the parent unit can continue to use the API
+  /// of the current unit.
+  parent_id String? @db.Uuid
+
+  /// The representative name of the unit.
+  name String @db.VarChar
+
+  /// Whether primary/secondary.
+  ///
+  /// Simple notation attribute.
+  primary Boolean @db.Boolean
+
+  /// Required or not.
+  ///
+  /// For required units, you cannot purchase them without excluding them.
+  required Boolean @db.Boolean
+
+  /// The order of placement within the attributed snapshots.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  parameters hub_sale_snapshot_unit_parameters[]
+  options    hub_sale_snapshot_unit_options[]
+
+  /// @minItems 1
+  stocks                              hub_sale_snapshot_unit_stocks[]
+  hub_order_good_calls                hub_order_good_calls[]
+  hub_cart_commodity_stocks           hub_cart_commodity_stocks[]
+  mv_hub_order_good_units             mv_hub_order_good_units[]
+  mv_hub_order_good_unit_prices       mv_hub_order_good_unit_prices[]
+  schedule_of_goods                   studio_account_schedule_of_goods[]
+  to_swagger                          hub_sale_snapshot_unit_swaggers?
+  to_icons                            hub_sale_snapshot_unit_icons[]
+  to_contents                         hub_sale_snapshot_unit_contents[]
+  studio_application_swagger_accesses studio_application_swagger_accesses[]
+
+  @@unique([hub_sale_snapshot_id, name])
+  @@index([parent_id])
+}
+
+/// Unit multilingual content information in the listing snapshot.
+///
+/// `hub_sale_snapshot_unit_content` is an entity that visualizes the
+/// multilingual content information of the unit in the listing snapshot.
+///
+/// @namespace Sales
+/// @erd Sales
+/// @author Asher
+model hub_sale_snapshot_unit_contents {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_units} of the attributed unit
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// The content of the unit.
+  name String @db.VarChar
+
+  /// Whether it's original swagger or not.
+  original Boolean @db.Boolean
+
+  /// language code.
+  lang_code String? @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  unit hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_snapshot_unit_id, name, lang_code])
+}
+
+/// Unit icon information in the listing snapshot.
+///
+/// `hub_sale_snapshot_unit_icons` is an entity that visualizes the icon
+/// information of the unit in the listing snapshot.
+///
+/// @namespace Sales
+/// @erd Sales
+/// @author Asher
+model hub_sale_snapshot_unit_icons {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  url String @db.VarChar()
+
+  unit hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+}
+
+/// Swagger information for API units in the listing snapshot.
+///
+/// @namespace Sales
+/// @erd Sales
+/// @erd Applications
+/// @author Asher
+model hub_sale_snapshot_unit_swaggers {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id} of the affiliated unit
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// The actual server address.
+  host_real String @db.VarChar
+
+  /// Test server address.
+  host_dev String? @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  unit hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  to_translations hub_sale_snapshot_unit_swagger_translates[]
+
+  @@unique([hub_sale_snapshot_unit_id])
+}
+
+/// Swagger information for API units in the listing snapshot.
+///
+/// @namespace Sales
+/// @erd Sales
+/// @author Asher
+model hub_sale_snapshot_unit_swagger_translates {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_swaggers.id}
+  ///
+  /// @format uuid of the swagger
+  hub_sale_snapshot_unit_swagger_id String @db.Uuid
+
+  /// Whether it's original swagger or not.
+  original Boolean @db.Boolean
+
+  /// Swagger's S3 URL.
+  url String @db.VarChar(80000)
+
+  /// Swagger language code.
+  lang_code String? @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  swagger hub_sale_snapshot_unit_swaggers @relation(fields: [hub_sale_snapshot_unit_swagger_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_snapshot_unit_swagger_id, lang_code])
+}
+
+/// Parameter information for the listing unit.
+///
+/// Definition of additional parameters to be sent to the seller server.
+///
+/// @namespace Sales
+/// @author Asher
+model hub_sale_snapshot_unit_parameters {
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id}
+  ///
+  /// @format uuid of the belonging unit
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// Type of parameter.
+  ///
+  /// Currently, this system supports two types of parameters.
+  ///
+  /// - query
+  /// - header
+  in String @db.VarChar
+
+  /// Key value, i.e. variable name.
+  key String @db.VarChar
+
+  /// Value, i.e. variable value.
+  value String @db.VarChar
+
+  description String?   @db.VarChar
+  sequence    Int       @db.Integer
+  created_at  DateTime  @db.Timestamptz
+  updated_at  DateTime  @db.Timestamptz
+  deleted_at  DateTime? @db.Timestamptz
+
+  unit hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+
+  // Query 및 Header 는 원칙상 중복 설정 가능함, 이런 경우 배열처럼 처리.
+  @@index([hub_sale_snapshot_unit_id])
+}
+
+/// Individual option information in the listing unit.
+///
+/// `hub_sale_snapshot_unit_options` is a sub-entity of
+/// {@link hub_sale_snapshot_units} that visualizes individual products in the
+/// listing, and is an entity designed to visualize individual option information
+/// of the corresponding unit.
+///
+/// - Examples
+///   - Selectable options
+///     - Computer performance: CPU, GPU, RAM, etc.
+///     - Image generation AI: Rendering quality, license type, theme, etc.
+///   - Descriptive options
+///     - Labeling
+///     - Purpose of use (survey)
+///
+/// If the type of option is true for the variable value in select, the
+/// {@link hub_sale_snapshot_unit_option_candidates candidate value} selection,
+/// depending on the {@link hub_sale_snapshot_unit_stocks final stock} that
+/// the customer will purchase, changes.
+///
+/// On the other hand, if the type is other than select, or if the type is select
+/// but the variable is false, this is an option that has no meaning beyond
+/// simple information transmission. Therefore, when a customer purchases this,
+/// no matter what value is entered and selected, this option in this case does not
+/// affect the final stock.
+///
+/// @namespace Sales
+/// @erd Orders
+/// @author Samchon
+model hub_sale_snapshot_unit_options {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id}
+  ///
+  /// @format uuid of the belonging unit
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// The name of the option.
+  name String @db.VarChar
+
+  /// Type of option.
+  ///
+  /// - select: How to select one of the candidate items
+  /// - boolean
+  /// - number
+  /// - string
+  type String @db.VarChar
+
+  /// Whether it is variable.
+  ///
+  /// Whether selecting a different candidate value when the current option
+  /// type is "select" will change the final stock.
+  variable Boolean @db.Boolean
+
+  /// Deployment order within the unit.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  unit       hub_sale_snapshot_units                    @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+  candidates hub_sale_snapshot_unit_option_candidates[]
+  choices    hub_cart_commodity_stock_choices[]
+
+  @@unique([hub_sale_snapshot_unit_id, name])
+}
+
+/// Candidate values that can be selected in the option.
+///
+/// `hub_sale_snapshot_unit_option_candidates` is an entity that visualizes
+/// individual candidate values that can be selected in the
+/// {@link hub_sale_snapshot_unit_options option} of type "select".
+///
+/// - Case
+/// - Option) RAM: 8GB, 16GB, 32GB
+/// - Option) GPU: RTX 3060, RTX 4080, TESLA
+/// - Option) License type: Personal, Commercial, Education
+///
+/// However, if the type of the attribution option is not "select", this entity
+/// is not needed.
+///
+/// @namespace Sales
+/// @erd Orders
+/// @author Samchon
+model hub_sale_snapshot_unit_option_candidates {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_options.id} of the attribution option
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_option_id String @db.Uuid
+
+  /// Representative name of the candidate value.
+  name String @db.VarChar
+
+  /// The order of placement within the Attribution Options.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  option hub_sale_snapshot_unit_options @relation(fields: [hub_sale_snapshot_unit_option_id], references: [id], onDelete: Cascade)
+
+  choices                          hub_sale_snapshot_unit_stock_choices[]
+  hub_cart_commodity_stock_choices hub_cart_commodity_stock_choices[]
+
+  @@unique([hub_sale_snapshot_unit_option_id, name])
+}
+
+/// Final stock information in the listing unit.
+///
+/// `hub_sale_snapshot_unit_stocks` is a sub-entity of
+/// {@link hub_sale_snapshot_units} that visualizes the product catalog in
+/// the listing, and is a kind of final stock that is composed by selecting all
+/// {@link hub_sale_snapshot_unit_options options} (variable "select" type)
+/// and their {@link hub_sale_snapshot_unit_option_candidates candidate values}
+/// in the belonging unit. It is the "goods"
+///
+/// that the customer actually purchases.
+///
+/// - Unit name) MacBook body
+/// - Options
+/// - CPU: \{ i3, i5, i7, i9 }
+/// - RAM: \{ 8GB, 16GB, 32GB, 64GB, 96GB }
+/// - SSD: \{ 256GB, 512GB, 1TB }
+/// - Final number of stocks: 4 * 5 * 3 = 60
+///
+/// For reference, the total number of `hub_sale_snapshot_unit_stocks` records
+/// in the belonging unit can be obtained by the Cartesian Sale. In other words,
+/// the product of all the candidate values that each (variable "select" type)
+/// option can have by the number of cases is the total number of final stocks
+/// in the unit. Of course, if there is not a single variable "select" type option,
+/// the final number of stocks in the unit is only 1.
+///
+/// @namespace Sales
+/// @erd Orders
+/// @author Samchon
+model hub_sale_snapshot_unit_stocks {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id}
+  ///
+  /// @format uuid of the belonging unit
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// The name of the final stock.
+  name String @db.VarChar
+
+  /// Deployment order within the unit.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  unit    hub_sale_snapshot_units                @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+  choices hub_sale_snapshot_unit_stock_choices[]
+
+  /// @minItems 1
+  prices                hub_sale_snapshot_unit_stock_prices[]
+  cart_commodity_stocks hub_cart_commodity_stocks[]
+
+  @@unique([hub_sale_snapshot_unit_id, name])
+}
+
+/// Final stock selection information.
+///
+/// `hub_sale_snapshot_unit_stock_choices` is an entity that visualizes which of the variable `select` type {@link hub_sale_snapshot_unit_options options} of the attributable
+/// {@link hub_sale_snapshot_unit_stocks stock} is selected, and which of the
+/// {@link hub_sale_snapshot_unit_option_candidates candidates} is selected within them.
+///
+/// Of course, if the attributable {@link hub_sale_snapshot_units unit} does not have any options,
+/// this entity can also be ignored.
+///
+/// @namespace Sales
+/// @author Samchon
+model hub_sale_snapshot_unit_stock_choices {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_stocks.id} of the stock
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_stock_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_option_candidates.id}
+  ///
+  /// @format uuid of the attribution candidate value
+  hub_sale_snapshot_unit_option_candidate_id String @db.Uuid
+
+  /// The order of placement within the assigned stock.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  stock     hub_sale_snapshot_unit_stocks            @relation(fields: [hub_sale_snapshot_unit_stock_id], references: [id], onDelete: Cascade, map: "fk_hub_sale_snapshot_unit_stock_choices_stock")
+  candidate hub_sale_snapshot_unit_option_candidates @relation(fields: [hub_sale_snapshot_unit_option_candidate_id], references: [id], onDelete: Cascade, map: "fk_hub_sale_snapshot_unit_stock_choices_candidate")
+
+  @@unique([hub_sale_snapshot_unit_stock_id, hub_sale_snapshot_unit_option_candidate_id])
+  @@index([hub_sale_snapshot_unit_option_candidate_id])
+}
+
+/// Stock price information.
+///
+/// `hub_sale_snapshot_unit_stock_prices` is an entity that visualizes the step
+/// price information of stock. And the step price mentioned here means that
+/// each includes both fixed costs and variable costs, and there are multiple
+/// such sections.
+///
+/// You can easily understand what step price information is by looking at
+/// the examples below.
+///
+/// 1. Fixed cost 50,000 won, free up to 1,000 APIs, 100 won per excess
+/// 2. Fixed cost 100,000 won, free up to 2,500 APIs, 75 won per excess
+/// 3. Fixed cost 150,000 won, free up to 4,000 APIs, 50 won per excess
+///
+/// @namespace Sales
+/// @author Samchon
+model hub_sale_snapshot_unit_stock_prices {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_stocks} of the attributable stock
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_stock_id String @db.Uuid
+
+  /// Free quantity within a fixed amount.
+  ///
+  /// @type uint
+  threshold Int @db.Integer
+
+  /// Fixed amount.
+  ///
+  /// @minimum 0
+  fixed Float @db.DoublePrecision
+
+  /// Variable amount.
+  ///
+  /// Cost per API usage exceeding the limit quantity.
+  ///
+  /// @minimum 0
+  variable Float @db.DoublePrecision
+
+  //----
+  // RELATIONS
+  //----
+  /// Attributable stock.
+  stock                     hub_sale_snapshot_unit_stocks @relation(fields: [hub_sale_snapshot_unit_stock_id], references: [id], onDelete: Cascade)
+  hub_cart_commodity_stocks hub_cart_commodity_stocks[]
+
+  @@unique([hub_sale_snapshot_unit_stock_id, threshold])
+}
+
+/// Content information of the listing snapshot.
+///
+/// `hub_sale_snapshot_contents` is an entity that visualizes the main content of
+/// {@link hub_sale_snapshots listing snapshot} include the language code. In other
+/// words, the `hub_sale_snapshot_contents` records can be multiple in one
+/// {@link hub_sale_snapshots}, and each record is represents the content on the
+/// {@link hub_sale_snapshots} in a different language.
+///
+/// Also, it is in charge of the main content, and attached files or thumbnails,
+/// etc. For reference, the title or main content described in the listing has a
+/// decisive influence on the customer's purchase decision. Therefore, when
+/// modifying the listing, the API server spec does not change at all, and
+/// even if only the title or main text has changed, a new snapshot must be issued,
+/// reviewed again, and the version must be changed.
+///
+/// By the way, the reason why attachment files like icons and images are belong to
+/// this `hub_sale_snapshot_contents` entity is, such attachment files may contain
+/// the prohibited signs or symbols in the national or cultural level. If not and
+/// and every icons and files in each language content are the same, just copy
+/// and paste their URL addresses.
+///
+/// @namespace SaleContents
+/// @author Samchon
+model hub_sale_snapshot_contents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the attributed snapshot
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// Language code
+  lang_code String @db.VarChar
+
+  /// Whether its language is the original language.
+  original Boolean @db.Boolean
+
+  /// title.
+  title String @db.VarChar
+
+  /// Summary Description
+  summary String?
+
+  /// The format of the body, almost the extension.
+  ///
+  /// Use txt or html or md.
+  format String @db.VarChar
+
+  /// Body content.
+  body String @db.Text
+
+  /// Version Description.
+  ///
+  /// You can record information about the version description.
+  version_description String? @db.Text
+
+  //----
+  // RELATIONS
+  //----
+  snapshot      hub_sale_snapshots                     @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  tags          hub_sale_snapshot_content_tags[]
+  to_files      hub_sale_snapshot_content_files[]
+  to_thumbnails hub_sale_snapshot_content_thumbnails[]
+  to_icons      hub_sale_snapshot_content_icons[]
+
+  @@unique([hub_sale_snapshot_id, lang_code])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([summary(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([body(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+/// Thumbnail image of the listing snapshot content.
+///
+/// @namespace SaleContents
+/// @author Asher
+model hub_sale_snapshot_content_thumbnails {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_contents.id}
+  ///
+  /// @format uuid of the content
+  hub_sale_snapshot_content_id String @db.Uuid
+
+  /// {@link hub_attachment_files.id} of the attached file
+  ///
+  /// @format uuid
+  attachment_file_id String @db.Uuid
+
+  /// Batch order.
+  ///
+  /// @type int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  content hub_sale_snapshot_contents @relation(fields: [hub_sale_snapshot_content_id], references: [id], onDelete: Cascade)
+  file    attachment_files           @relation(fields: [attachment_file_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_sale_snapshot_content_id])
+  @@index([attachment_file_id])
+}
+
+/// Representative image of the listing snapshot content.
+///
+/// @namespace SaleContents
+/// @author Asher
+model hub_sale_snapshot_content_icons {
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_contents.id}
+  ///
+  /// @format uuid of the content
+  hub_sale_snapshot_content_id String @db.Uuid
+
+  /// {@link hub_attachment_files.id} of the attached file
+  ///
+  /// @format uuid
+  attachment_file_id String @db.Uuid
+
+  /// Batch order.
+  ///
+  /// @type int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  content hub_sale_snapshot_contents @relation(fields: [hub_sale_snapshot_content_id], references: [id], onDelete: Cascade)
+  file    attachment_files           @relation(fields: [attachment_file_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_sale_snapshot_content_id])
+  @@index([attachment_file_id])
+}
+
+/// Attachments to the listing snapshot content.
+///
+/// `hub_sale_snapshot_content_files` is an entity that represents attachments
+/// to the posting snapshot content.
+///
+/// @namespace SaleContents
+/// @author SaleContents
+model hub_sale_snapshot_content_files {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_contents.id}
+  ///
+  /// @format uuid of the content
+  hub_sale_snapshot_content_id String @db.Uuid
+
+  /// {@link hub_attachment_files.id} of the attached file
+  ///
+  /// @format uuid
+  attachment_file_id String @db.Uuid
+
+  /// Batch order.
+  ///
+  /// @type int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  content hub_sale_snapshot_contents @relation(fields: [hub_sale_snapshot_content_id], references: [id], onDelete: Cascade)
+  file    attachment_files           @relation(fields: [attachment_file_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_sale_snapshot_content_id])
+  @@index([attachment_file_id])
+}
+
+/// Search tags for the listing snapshot content.
+///
+/// `hub_sale_snapshot_content_tags` is an entity that visualizes the search tags
+/// for the listing snapshot content.
+///
+/// @namespace SaleContents
+/// @author Samchon
+model hub_sale_snapshot_content_tags {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_contents.id} of the attributed content.
+  ///
+  /// @format uuid
+  hub_sale_snapshot_content_id String @db.Uuid
+
+  /// Search tag value.
+  value String @db.VarChar
+
+  /// Batch order.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  content hub_sale_snapshot_contents @relation(fields: [hub_sale_snapshot_content_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_snapshot_content_id, value])
+  @@index([value(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+/// Category classification info of sale snapshot.
+///
+/// `hub_sale_snapshot_categories` is an entity that expresses 
+/// which {@link hub_channel_categories category} the listing 
+/// {@link hub_sale_snapshots snapshot}.
+/// 
+/// It is designed to resolve the M:N relationship between 
+/// {@link hub_sale_snapshots} and {@link hub_channel_categories}, 
+/// respectively. Of course, if the target category being referred to is a 
+/// major category, all minor categories belonging to it can also be used.
+///
+/// @namespace Sales
+/// @erd Systematic
+/// @author Samchon
+model hub_sale_snapshot_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Belonged snapshot's {@link hub_sale_snapshots.id}
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// Belonged category's {@link hub_channel_categories.id}
+  ///
+  /// @format uuid
+  hub_channel_category_id String @db.Uuid
+
+  /// Sequence order in belonged snapshot.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  snapshot hub_sale_snapshots     @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  category hub_channel_categories @relation(fields: [hub_channel_category_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_snapshot_id, hub_channel_category_id])
+  @@index([hub_channel_category_id])
+}
+
+/// Duplicate history of the listing.
+///
+/// @namespace SaleContents
+/// @author Samchon
+model hub_sale_replicas {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sales.id} of the newly created listing by duplicating it
+  ///
+  /// @format uuid
+  hub_sale_id String @db.Uuid
+
+  /// {@link hub_sale_snapshots.id}
+  ///
+  /// @format uuid of the original snapshot to be replicated
+  hub_sale_snapshot_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  /// A newly created property by duplicating it.
+  sale hub_sales @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+
+  /// The original snapshot that is being cloned.
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_id])
+  @@index([hub_sale_snapshot_id])
+}
+
+/// The most recent snapshot information of the property.
+///
+/// @author Samchon
+/// @hidden
+model mv_hub_sale_last_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// {@link hub_sales.id} of the property
+  ///
+  /// @format uuid
+  hub_sale_id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the last snapshot
+  ///
+  /// @format uuid
+  last_hub_sale_snapshot_id String @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the last review copy.
+  ///
+  /// The ID of the snapshot that started the review.
+  ///
+  /// If the snapshot is updated due to revisions during the review,
+  /// this value may be different from `last_hub_sale_snapshot_id`.
+  ///
+  /// Conversely, if the review has not yet started, this attribute is assigned
+  /// a `null` value.
+  ///
+  /// @format uuid
+  last_audited_hub_sale_snapshot_id String? @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the most recent approved snapshot.
+  ///
+  /// If revisions were made during the approved review, this value may be
+  /// different from the `audited_and_approved_hub_sale_snapshot_id`.
+  ///
+  /// @format uuid
+  approved_hub_sale_snapshot_id String? @db.Uuid
+
+  /// {@link hub_sale_snapshots.id} of the most recently approved snapshot review.
+  ///
+  /// The ID of the snapshot that started the most recent approved review.
+  ///
+  /// If the snapshot was updated during the review due to revisions,
+  /// this value may be different from `approved_hub_sale_snapshot_id`.
+  ///
+  /// @format uuid
+  approved_audited_hub_sale_snapshot_id String? @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  /// Property owned.
+  sale hub_sales @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+
+  /// The very last snapshot.
+  last hub_sale_snapshots @relation("rel_mv_hub_sale_last_snapshots_last", fields: [last_hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// A snapshot that was the starting point of the final evaluation.
+  lastAudited hub_sale_snapshots? @relation("rel_mv_hub_sale_last_snapshots_last_audited", fields: [last_audited_hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// The latest approved snapshot
+  approved hub_sale_snapshots? @relation("rel_mv_hub_sale_last_snapshots_approved", fields: [approved_hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// The starting point for review of the latest approved snapshot.
+  approvedAudited hub_sale_snapshots? @relation("rel_mv_hub_sale_last_snapshots_approved_audited", fields: [approved_audited_hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  @@unique([last_hub_sale_snapshot_id])
+  @@unique([last_audited_hub_sale_snapshot_id])
+  @@unique([approved_hub_sale_snapshot_id])
+  @@unique([approved_audited_hub_sale_snapshot_id])
+}
+
+/// @hidden
+model hub_sale_collections {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Collection thumbnail.
+  thumbnail String @db.VarChar
+
+  /// Background color.
+  background_color String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  updated_at DateTime? @db.Timestamptz
+
+  /// @minItems 1
+  elements hub_sale_collection_elements[]
+  contents hub_sale_collection_contents[]
+}
+
+/// @hidden
+model hub_sale_collection_contents {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_collections} of the attributed collection
+  hub_sale_collection_id String @db.Uuid
+
+  /// Language code
+  lang_code String @db.VarChar
+
+  /// Collection name.
+  title String @db.VarChar
+
+  /// A one-line description of the collection.
+  summary String @db.VarChar
+
+  /// The format of the body, almost the extension.
+  ///
+  /// Use txt or html or md.
+  format String @db.VarChar
+
+  /// Body content.
+  body String? @db.Text
+
+  //----
+  // RELATIONS
+  //----
+  collection hub_sale_collections @relation(fields: [hub_sale_collection_id], references: [id], onDelete: Cascade)
+}
+
+/// @hidden
+model hub_sale_collection_elements {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_collections.id} of the affiliated collection
+  hub_sale_collection_id String @db.Uuid
+
+  /// {@link hub_sale_collections.id} of the affiliated collection
+  hub_sale_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  sale       hub_sales            @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+  collection hub_sale_collections @relation(fields: [hub_sale_collection_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_sale_collection_id, hub_sale_id])
+  @@index([hub_sale_id])
+}
+
+/// @hidden
+model hub_sale_snapshot_view_histories {
+  id String @id @db.Uuid
+
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String? @db.Uuid
+
+  hub_sale_snapshot_id String @db.Uuid
+
+  created_at DateTime @db.Timestamptz
+
+  customer hub_customers      @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members?       @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+}
+
+/// @hidden
+model hub_bookmark_sales {
+  id String @id @db.Uuid
+
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  hub_sale_id String @db.Uuid
+
+  created_at DateTime @db.Timestamptz
+
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  sale     hub_sales     @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+}
+
+/// @hidden
+view mv_hub_sale_call_rankings {
+  hub_sale_id String @id @db.Uuid
+  count       Int    @db.Integer
+  success     Int    @db.Integer
+  value       Int    @db.Integer
+
+  sale hub_sales @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+}
+
+/// @hidden
+view mv_hub_sale_rankings {
+  hub_sale_id String @id @db.Uuid
+
+  view_count Int @db.Integer
+
+  // like_count Int @db.Integer
+
+  sale hub_sales @relation(fields: [hub_sale_id], references: [id], onDelete: Cascade)
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_view_aggregate_per_hours {
+  hub_sale_snapshot_id String   @id @db.Uuid
+  date                 DateTime @db.Date
+
+  count Int @db.Integer
+
+  viewer_count Int @db.Integer
+
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard v_date_hours       @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_view_aggregate_per_days {
+  hub_sale_snapshot_id String   @id @db.Uuid
+  date                 DateTime @db.Date
+
+  count Int @db.Integer
+
+  viewer_count Int @db.Integer
+
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard v_date_days        @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_view_aggregate_per_weeks {
+  hub_sale_snapshot_id String   @id @db.Uuid
+  date                 DateTime @db.Date
+
+  count Int @db.Integer
+
+  viewer_count Int @db.Integer
+
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard v_date_weeks       @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_view_aggregate_per_months {
+  hub_sale_snapshot_id String   @id @db.Uuid
+  date                 DateTime @db.Date
+
+  count Int @db.Integer
+
+  viewer_count Int @db.Integer
+
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard v_date_months      @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_view_aggregate_per_quarters {
+  hub_sale_snapshot_id String   @id @db.Uuid
+  date                 DateTime @db.Date
+
+  count Int @db.Integer
+
+  viewer_count Int @db.Integer
+
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard v_date_quarters    @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_sale_snapshot_view_aggregate_per_years {
+  hub_sale_snapshot_id String   @id @db.Uuid
+  date                 DateTime @db.Date
+
+  count Int @db.Integer
+
+  viewer_count Int @db.Integer
+
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  standard v_date_years       @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}

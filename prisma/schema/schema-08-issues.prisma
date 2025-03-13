@@ -1,0 +1,250 @@
+/// Purchased product related issue posting.
+///
+/// `hub_order_good_issues` is a {@link bbs_articles bulletin board} where 
+/// customers and {@link hub_sellers sellers} can raise issues with respect to 
+/// {@link hub_order_goods products} that {@link hub_customers customers} have 
+/// ordered {@link hub_orders} and {@link hub_order_publishes completed payment}.
+///
+/// Customers and sellers can write issue postings by topic for products and 
+/// continue discussions with {@link hub_order_good_issue_comments comments}.
+///
+/// In addition, among the types of issues, customers can request additional 
+/// work such as customization or modification from sellers. In this case, sellers 
+/// can charge {@link hub_order_good_issue_fees commission fees} to customers and 
+/// claim reasonable costs for additional work.
+///
+/// Finally, the customer or seller who created the issue can close the issue 
+/// after completing it (`closed_at`). However, even after closing the issue, 
+/// comments can continue to be written on the issue, and the seller can also 
+/// charge a fee.
+///
+/// @namespace Issues
+/// @author Samchon
+model hub_order_good_issues {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_order_goods.id} of the order goods
+  ///
+  /// @format uuid
+  hub_order_good_id String @db.Uuid
+
+  /// Issue Author Customer {@link hub_customers.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Type of issue author
+  ///
+  /// - customer: customer
+  /// - seller: seller
+  actor_type String @db.VarChar
+
+  /// You should be able to tell who closed it later
+  closed_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  base      bbs_articles                            @relation(fields: [id], references: [id], onDelete: Cascade)
+  good      hub_order_goods                         @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  customer  hub_customers                           @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member    hub_members                             @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  fees      hub_order_good_issue_fees[]
+  aggregate mv_hub_order_good_issue_fee_aggregates?
+
+  @@index([hub_order_good_id])
+  @@index([hub_member_id, actor_type])
+}
+
+/// Comments written on an issue.
+///
+/// `hub_order_good_issue_comments` is a subtype entity of {@link bbs_article_comments}, 
+/// and is used when {@link hub_customers customers} and {@link hub_sellers sellers} 
+/// communicate with each other regarding the {@link hub_order_issues issues} 
+/// written for {@link hub_order_goods ordered products}.
+///
+/// Note that comments can continue to be written even after an issue is closed.
+///
+/// @namespace Issues
+/// @author Samchon
+model hub_order_good_issue_comments {
+  //----
+  // COLUMNS
+  //----
+  /// PK + FK.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who wrote the comment
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Type of customer who wrote the comment
+  ///
+  /// - customer: customer
+  /// - seller: seller
+  actor_type String @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  base     bbs_article_comments @relation(fields: [id], references: [id], onDelete: Cascade)
+  customer hub_customers        @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members          @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_member_id, actor_type])
+}
+
+/// Offer a fee for resolving an issue.
+///
+/// `HubOrderItemIssueFee` means the fee that {@link hub_sellers seller} 
+/// offers to {@link hub_customers customer} for resolving 
+/// {@link hub_order_issues issue} for {@link hub_order_goods product} ordered by 
+/// a customer. This is usually caused when a customer requests additional work 
+/// such as customization or modification through an issue.
+///
+/// The customer may {@link hub_order_good_issue_fee_payments} pay the fee, 
+/// or may decline, and in some cases may negotiate the price. If the seller 
+/// wants to adjust the price in response, he/she can delete the current record 
+/// and reissue a new fee record.
+///
+/// @namespace Issues
+/// @author Samchon
+model hub_order_good_issue_fees {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_order_good_issues.id}
+  ///
+  /// @format uuid of the issue
+  hub_order_good_issue_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the seller customer who submitted the commission
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_seller_id String @db.Uuid
+
+  /// Fee amount.
+  ///
+  /// @exclusiveMinimum 0
+  value Float @db.DoublePrecision
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Record deletion date.
+  ///
+  /// Cannot be deleted after the customer {@link hub_order_good_issue_fee_accepts} accepts the commission fee.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  issue    hub_order_good_issues             @relation(fields: [hub_order_good_issue_id], references: [id], onDelete: Cascade)
+  customer hub_customers                     @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members                       @relation(fields: [hub_seller_id], references: [id], onDelete: Cascade)
+  accept   hub_order_good_issue_fee_accepts?
+
+  @@index([hub_order_good_issue_id])
+  @@index([hub_seller_id, created_at])
+}
+
+/// Accepting a fee for an issue.
+///
+/// `hub_order_good_issue_fee_accepts` is an entity that embodies the act of 
+/// {@link hub_customers customers} accepting and accepting the 
+/// {@link hub_order_good_issue_fees fee} charged by {@link hub_sellers sellers}.
+///
+/// Note that the moment when the fee is accepted by the customer and the moment 
+/// when it takes effect can be different. That is, the fee is accepted at this 
+/// point and the deposit is withdrawn, but the effect of this can be postponed,
+/// so that the seller can start work on it in the future, or leave room for 
+/// a change of mind in the future.
+///
+/// @namespace Issues
+/// @author Samchon
+model hub_order_good_issue_fee_accepts {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// @format uuid
+  hub_order_good_issue_fee_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who accepted the commission
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Effective date and time of acceptance of the fee.
+  published_at DateTime @db.Timestamptz
+
+  /// Date of cancellation of acceptance of the fee.
+  ///
+  /// Cannot be cancelled after it has become effective.
+  cancelled_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  fee      hub_order_good_issue_fees @relation(fields: [hub_order_good_issue_fee_id], references: [id], onDelete: Cascade)
+  customer hub_customers             @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members               @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_order_good_issue_fee_id])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+  @@index([created_at])
+  @@index([published_at])
+  @@index([cancelled_at])
+}
+
+/// Total fees for each issue.
+///
+/// @author Samchon
+/// @hidden
+model mv_hub_order_good_issue_fee_aggregates {
+  hub_order_good_issue_id String @id @db.Uuid
+  request_count           Int    @db.Integer
+  request_amount          Float  @db.DoublePrecision
+  accept_count            Int    @db.Integer
+  accept_amount           Float  @db.DoublePrecision
+
+  issue hub_order_good_issues @relation(fields: [hub_order_good_issue_id], references: [id], onDelete: Cascade)
+}

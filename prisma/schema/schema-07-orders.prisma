@@ -1,0 +1,758 @@
+/// Shopping cart.
+///
+/// The shopping cart `hub_carts` is literally a space where 
+/// {@link hub_customers customers} temporarily store products before purchasing 
+/// them {@link hub_orders}.
+///
+/// However, `hub_carts` here does not necessarily mean that the target of 
+/// putting products in the shopping cart is consumers. {@link hub_sellers sellers} 
+/// and {@link hub_administrators administrators} can also configure their own 
+/// shopping carts, but the purpose is not to purchase products themselves,
+/// but to pre-configure shopping cart templates to be provided to customers.
+///
+/// @namespace Orders
+/// @author Samchon
+model hub_carts {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id} of the cart creator customer
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String? @db.Uuid
+
+  /// Type of shopping cart constructor.
+  actor_type String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer    hub_customers          @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member      hub_members?           @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  commodities hub_cart_commodities[]
+
+  @@index([hub_customer_id, actor_type, created_at, deleted_at])
+}
+
+/// Products (raw materials) in the cart.
+///
+/// `hub_cart_commodities` is an entity that visualizes
+/// {@link hub_sale_snapshots product snapshots} that {@link hub_customers customers}
+/// have in mind for {@link hub_orders purchases}.
+///
+/// And if the customer actually orders this in the future, the unit will be
+/// {@link hub_order_goods} in `hub_cart_commodities`.
+///
+/// And when putting product snapshots in the cart, the customer inevitably selects
+/// specific {@link hub_sale_snapshot_units units} and
+/// {@link hub_sale_snapshot_unit_stocks final stocks} within the product snapshots.
+///
+/// Information about these units and stocks is recorded in the sub-entity
+/// {@link hub_cart_commodity_stocks}.
+///
+/// @namespace Orders
+/// @author Samchon
+model hub_cart_commodities {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_carts.id} of your cart
+  ///
+  /// @format uuid
+  hub_cart_id String @db.Uuid
+
+  /// {@link hub_sale_snapshots} of target listing snapshots
+  ///
+  /// @format uuid
+  hub_sale_snapshot_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  /// Whether published.
+  ///
+  /// Ordered and paid for with current cart items.
+  ///
+  /// Until order completion, cart items can be recycled to continue creating
+  /// new order request records.
+  ///
+  /// As part of reverse normalization, this is actually a computable attribute,
+  /// but only for performance.
+  published Boolean
+
+  //----
+  // RELATIONS
+  //----
+  cart     hub_carts          @relation(fields: [hub_cart_id], references: [id], onDelete: Cascade)
+  snapshot hub_sale_snapshots @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  to_stocks hub_cart_commodity_stocks[]
+  goods     hub_order_goods[]
+
+  @@index([hub_cart_id, created_at])
+  @@index([hub_sale_snapshot_id])
+}
+
+/// Final stock information of the item in the cart.
+///
+/// `hub_cart_commodity_stocks` is a sub-entity of {@link hub_cart_commodities}
+/// that embodies the information of the {@link hub_sale_snapshots item snapshots}
+/// in the cart, and corresponds to the individual
+/// {@link hub_sale_snapshot_units units} in the target item snapshot and the
+/// stocks selected among those units.
+///
+/// Therefore, if a customer selects multiple units and stocks from the target
+/// item snapshot, the {@link hub_cart_commodities} record will also have multiple
+/// corresponding `hub_cart_commodity_stocks` records.
+///
+/// @namespace Orders
+/// @author Samchon
+model hub_cart_commodity_stocks {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_cart_commodities} of the belonging cart
+  ///
+  /// @format uuid
+  hub_cart_commodity_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id}
+  ///
+  /// @format uuid of target unit
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_stocks} of target final stock
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_stock_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_stock_prices} of the selected price model
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_stock_price_id String @db.Uuid
+
+  /// The order in which the products are placed in the cart.
+  ///
+  /// @type int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  commodity hub_cart_commodities                @relation(fields: [hub_cart_commodity_id], references: [id], onDelete: Cascade)
+  unit      hub_sale_snapshot_units             @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+  stock     hub_sale_snapshot_unit_stocks       @relation(fields: [hub_sale_snapshot_unit_stock_id], references: [id], onDelete: Cascade)
+  price     hub_sale_snapshot_unit_stock_prices @relation(fields: [hub_sale_snapshot_unit_stock_price_id], references: [id], onDelete: Cascade)
+
+  choices hub_cart_commodity_stock_choices[]
+
+  @@unique([hub_cart_commodity_id, hub_sale_snapshot_unit_id])
+  @@index([hub_sale_snapshot_unit_id])
+  @@index([hub_sale_snapshot_unit_stock_id])
+  @@index([hub_sale_snapshot_unit_stock_price_id])
+}
+
+/// Information about the final stock options in the cart.
+///
+/// `hub_cart_commodity_stock_choices` is a sub-entity of
+/// {@link hub_cart_commodity_stocks} that records which
+/// {@link hub_customers customers} used when adding
+/// {@link hub_sale_snapshot_units units} of
+/// {@link hub_sale_snapshots listing snapshots} and
+/// {@link hub_sale_snapshot_unit_stocks stocks}) to their
+/// {@link hub_carts cart}, and which {@link hub_sale_snapshot_unit_options options})
+/// were used and which {@link hub_sale_snapshot_unit_option_candidates candidate items}
+/// were selected or entered within them.
+///
+/// Therefore, `hub_cart_commodity_stock_choices` has a reference property to the
+/// {@link hub_sale_snapshot_unit_option_candidates candidate items} and a
+/// description property, in addition to the reference to the
+/// {@link hub_sale_snapshot_unit_options option}), if the type of the target {@link hub_sale_snapshot_unit_options option} is
+/// select, enter the
+/// {@link hub_sale_snapshot_unit_option_candidates candidate items} selected by the {@link hub_customers customer}, and if not, enter the value entered by the {@link hub_customers customer}.
+///
+/// @namespace Orders
+/// @author Samchon
+model hub_cart_commodity_stock_choices {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_cart_commodity_stocks.id}
+  ///
+  /// @format uuid
+  hub_cart_commodity_stock_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_unit_options.id} of target options
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_option_id String @db.Uuid
+
+  /// The customer's selected candidate values for the selected option
+  /// {@link hub_sale_snapshot_unit_option_candidates.id}
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_option_candidate_id String? @db.Uuid
+
+  /// The value provided by the customer for the descriptive option.
+  value String? @db.VarChar
+
+  /// The order in which the products are placed in the cart.
+  ///
+  /// @type int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  stock     hub_cart_commodity_stocks                 @relation(fields: [hub_cart_commodity_stock_id], references: [id], onDelete: Cascade)
+  option    hub_sale_snapshot_unit_options            @relation(fields: [hub_sale_snapshot_unit_option_id], references: [id], onDelete: Cascade, map: "fk_hub_cart_commodity_stock_choices_option")
+  candidate hub_sale_snapshot_unit_option_candidates? @relation(fields: [hub_sale_snapshot_unit_option_candidate_id], references: [id], onDelete: Cascade, map: "fk_hub_cart_commodity_stock_choices_candidate")
+
+  @@unique([hub_cart_commodity_stock_id, hub_sale_snapshot_unit_option_id])
+  @@index([hub_sale_snapshot_unit_option_id], map: "idx_hub_cart_commodity_stock_choices_option")
+  @@index([hub_sale_snapshot_unit_option_candidate_id], name: "idx_hub_cart_commodity_stock_choices_candidate")
+}
+
+/// Order information.
+///
+/// `hub_orders` is an entity that visualizes the order information of
+/// {@link hub_customers customers}.
+///
+/// And as soon as a customer places an order, all
+/// {@link hub_cart_commodities shopping cart products} in the target
+/// {@link hub_carts shopping cart} are promoted to
+/// {@link hub_order_goods order products}, and a {@link hub_order_goods} record is
+/// created under `hub_orders`.
+///
+/// Of course, not all raw materials in the target shopping cart become order
+/// products, and only those selected by the customer become {@link hub_order_goods}.
+///
+/// @namespace Orders
+/// @author Samchon
+model hub_orders {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_customers.id} of the customer you are affiliated with
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String? @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Order cancellation date and time.
+  cancelled_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members?  @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  goods                  hub_order_goods[]
+  coupon_ticket_payments hub_coupon_ticket_payments[]
+  mv_price               mv_hub_order_prices?
+  publish                hub_order_publishes?
+
+  @@index([hub_customer_id, created_at, cancelled_at])
+  @@index([created_at, cancelled_at])
+}
+
+/// Individual product information that constitutes an order.
+///
+/// `hub_order_goods` is an entity that represents each product ordered by 
+/// {@link hub_customers customers}, and the record is created when 
+/// {@link hub_cart_commodities raw materials} in {@link hub_carts shopping cart} 
+/// are upgraded to products due to the customer's {@link hub_orders order request}.
+///
+/// And `hub_order_goods` is a concept that corresponds to {@link hub_cart_commodities}, 
+/// or {@link hub_sale_snapshots sales snapshot} units.
+///
+/// In addition, `hub_order_goods` is the most basic unit for the process after 
+/// the order, that is, after-sales processing (A/S). For example, the unit where 
+/// a customer issues {@link hub_order_good_issues issues} for ordered products 
+/// or requests a refund is this `hub_order_goods`.
+///
+/// @namespace Orders @author Samchon
+model hub_order_goods {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_orders.id} of the order
+  ///
+  /// @format uuid
+  hub_order_id String @db.Uuid
+
+  /// {@link hub_cart_commodities.id} of the product in your cart
+  ///
+  /// @format uuid
+  hub_cart_commodity_id String @db.Uuid
+
+  /// {@link hub_sellers.id} of the affiliated seller
+  ///
+  /// Seller information of the affiliated item, recorded again for quick search.
+  ///
+  /// @format uuid
+  hub_seller_id String @db.Uuid
+
+  /// Contract start date.
+  ///
+  /// Unlike the time of order confirmation, the effective date can be pushed back.
+  ///
+  /// And the effective date of the contract can be continuously edited until 
+  /// it arrives.
+  ///
+  /// Also, the monthly fixed fee is calculated based on the start date.
+  ///
+  /// Please note that after the customer purchases the seller's API, the review 
+  /// and development process is necessary, so the effective date of the contract 
+  /// cannot help but be pushed back further than the order confirmation.
+  opened_at DateTime? @db.Timestamptz
+
+  /// Contract termination date.
+  ///
+  /// However, the contract termination date cannot be set immediately. From the 
+  /// contract start date, it can only be cancelled after a period of at least 
+  /// 1 month has passed. And if the contract has already been started, it can 
+  /// only be terminated in 1-month increments.
+  closed_at DateTime? @db.Timestamptz
+
+  /// The order of placement in the order of the attribution.
+  ///
+  /// @format int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  order     hub_orders           @relation(fields: [hub_order_id], references: [id], onDelete: Cascade)
+  commodity hub_cart_commodities @relation(fields: [hub_cart_commodity_id], references: [id], onDelete: Cascade)
+  seller    hub_sellers          @relation(fields: [hub_seller_id], references: [id], onDelete: Cascade)
+
+  reviews      hub_sale_snapshot_reviews[]
+  calls        hub_order_good_calls[]
+  issues       hub_order_good_issues[]
+  of_schedules studio_account_schedule_of_goods[]
+
+  mv_price                                      mv_hub_order_good_prices?
+  mv_snapshots                                  mv_hub_order_good_snapshots[]
+  mv_units                                      mv_hub_order_good_units[]
+  mv_hub_order_good_call_aggregate_per_days     mv_hub_order_good_call_aggregate_per_days[]
+  mv_hub_order_good_call_aggregate_per_hours    mv_hub_order_good_call_aggregate_per_hours[]
+  mv_hub_order_good_call_aggregate_per_totals   mv_hub_order_good_call_aggregate_per_totals[]
+  mv_hub_order_good_call_aggregate_per_weeks    mv_hub_order_good_call_aggregate_per_weeks[]
+  mv_hub_order_good_call_aggregate_per_months   mv_hub_order_good_call_aggregate_per_months[]
+  mv_hub_order_good_call_aggregate_per_quarters mv_hub_order_good_call_aggregate_per_quarters[]
+  mv_hub_order_good_call_aggregate_per_years    mv_hub_order_good_call_aggregate_per_years[]
+  mv_hub_order_good_unit_prices                 mv_hub_order_good_unit_prices[]
+  mv_hub_sale_order_good_aggregate_per_days     mv_hub_sale_order_good_aggregate_per_days[]
+  studio_meta_chat_session_goods                studio_meta_chat_session_goods[]
+
+  @@unique([hub_order_id, hub_cart_commodity_id])
+  @@index([hub_cart_commodity_id])
+  @@index([hub_seller_id])
+}
+
+/// Confirmation information of the order.
+///
+/// `hub_order_publishes` is an entity that visualizes the confirmation 
+/// information of the order. Therefore, the existence of this entity means that 
+/// the {@link hub_orders order} requested by {@link hub_customers customer} has 
+/// been established as a contract and confirmed.
+///
+/// However, even if the contract is confirmed, it does not start immediately. 
+/// The initiation of the contract can be set individually for each 
+/// {@link hub_order_goods product}, and this is designed so that the initiation 
+/// of the contract can be postponed because the customer needs to analyze and 
+/// develop the API after purchasing the seller.
+///
+/// However, even if the initiation of the contract is later, the fixed cost for 
+/// the first month is converted to a deposit status when the contract becomes 
+/// effective. Of course, the order contract can be canceled and refunded before 
+/// the initiation of the contract.
+///
+/// @author Samchon
+/// @namespace Orders
+model hub_order_publishes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_orders.id} of the order
+  ///
+  /// @format uuid
+  hub_order_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  order hub_orders @relation(fields: [hub_order_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_order_id])
+}
+
+/// API call history for ordered products.
+///
+/// An entity that records the API calls made by customers based on the products 
+/// they ordered.
+///
+/// @namespace Orders
+/// @author Samchon
+model hub_order_good_calls {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_order_goods.id} of the order goods
+  hub_order_good_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id} of the unit corresponding to the called API
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  /// A list of argument values entered.
+  ///
+  /// Encrypted because it may contain personal information.
+  arguments String?
+
+  /// The return value as the execution result.
+  ///
+  /// Encrypted because it may contain personal information.
+  output String?
+
+  /// API call method.
+  method String @db.VarChar
+
+  /// API call path.
+  path String @db.VarChar(80000)
+
+  /// Response code from the seller server.
+  ///
+  /// @type uint
+  status Int? @db.Integer
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// API call completion date and time.
+  respond_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  good hub_order_goods         @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  unit hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+
+  @@index([hub_order_good_id, created_at])
+  @@index([hub_sale_snapshot_unit_id, created_at])
+}
+
+/// Pricing information for your order.
+///
+/// @author Samcho
+/// @hidden
+model mv_hub_order_prices {
+  hub_order_id String @id @db.Uuid
+  value        Float  @db.DoublePrecision
+  deposit      Float  @db.DoublePrecision
+  ticket       Float  @db.DoublePrecision
+
+  order hub_orders @relation(fields: [hub_order_id], references: [id], onDelete: Cascade)
+}
+
+/// Price information for ordered items.
+///
+/// @author Samcho
+/// @hidden
+model mv_hub_order_good_prices {
+  hub_order_good_id String @id @db.Uuid
+  value             Float  @db.DoublePrecision
+  deposit           Float  @db.DoublePrecision
+  ticket            Float  @db.DoublePrecision
+
+  good hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+}
+
+/// Price information for each unit of ordered products.
+///
+/// An entity that visualizes price information for each unit of ordered products, 
+/// mainly used for calculating variable costs.
+///
+/// @author Samchon
+/// @hidden
+model mv_hub_order_good_unit_prices {
+  hub_order_good_id                     String @db.Uuid
+  hub_sale_snapshot_unit_id             String @db.Uuid
+  hub_sale_snapshot_unit_stock_price_id String @db.Uuid
+
+  /// Discount tickets for fixed costs.
+  fixed_ticket Float @db.DoublePrecision
+
+  /// Discount tickets among variable costs
+  variable_ticket Float @db.DoublePrecision
+
+  /// Total number of API calls,
+  count Int @db.Integer
+
+  good  hub_order_goods         @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  price hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+
+  @@id([hub_order_good_id, hub_sale_snapshot_unit_id])
+  @@index([hub_sale_snapshot_unit_id])
+  @@index([hub_sale_snapshot_unit_stock_price_id])
+}
+
+/// Mapping information for the available snapshots of items in the order.
+///
+/// @author Samchon
+/// @hidden
+model mv_hub_order_good_snapshots {
+  hub_order_good_id           String @db.Uuid
+  hub_sale_snapshot_id        String @db.Uuid
+  hub_sale_snapshot_origin_id String @db.Uuid
+
+  good     hub_order_goods           @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  snapshot hub_sale_snapshots        @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  mv_units mv_hub_order_good_units[]
+
+  @@id([hub_order_good_id, hub_sale_snapshot_id])
+  @@index([hub_sale_snapshot_id])
+  @@index([hub_sale_snapshot_origin_id])
+}
+
+/// Mapping information for units that can be used in ordered items.
+///
+/// @author Samchon
+/// @hidden
+model mv_hub_order_good_units {
+  id                               String @id @db.Uuid
+  hub_order_good_id                String @db.Uuid
+  hub_sale_snapshot_id             String @db.Uuid
+  hub_sale_snapshot_unit_id        String @db.Uuid
+  hub_sale_snapshot_unit_origin_id String @db.Uuid
+
+  good        hub_order_goods             @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  snapshot    hub_sale_snapshots          @relation(fields: [hub_sale_snapshot_id], references: [id], onDelete: Cascade)
+  unit        hub_sale_snapshot_units     @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+  mv_snapshot mv_hub_order_good_snapshots @relation(fields: [hub_order_good_id, hub_sale_snapshot_id], references: [hub_order_good_id, hub_sale_snapshot_id])
+
+  @@unique([hub_order_good_id, hub_sale_snapshot_unit_id])
+  @@index([hub_order_good_id, hub_sale_snapshot_id])
+  @@index([hub_sale_snapshot_id])
+  @@index([hub_sale_snapshot_unit_id])
+  @@index([hub_sale_snapshot_unit_origin_id])
+}
+
+/// @hidden
+view mv_hub_sale_order_good_aggregate_per_days {
+  hub_order_good_id String @id @db.Uuid
+
+  date DateTime @db.Date
+
+  publish_count Int @db.Integer
+
+  success_count Int @db.Integer
+  status_2xx    Int @db.Integer
+  status_3xx    Int @db.Integer
+  status_4xx    Int @db.Integer
+  status_5xx    Int @db.Integer
+  none          Int @db.Integer
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_days     @relation(fields: [date], references: [date], onDelete: Cascade)
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_hours {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Timestamptz
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_hours    @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_days {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Date
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_days     @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_weeks {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Date
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_weeks    @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_months {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Date
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_months   @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_quarters {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Date
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_quarters @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_years {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Date
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_years    @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
+
+/// @hidden
+view mv_hub_order_good_call_aggregate_per_totals {
+  hub_order_good_id String   @id @db.Uuid
+  date              DateTime @db.Date
+
+  success    Int @db.Integer
+  status_2xx Int @db.Integer
+  status_3xx Int @db.Integer
+  status_4xx Int @db.Integer
+  status_5xx Int @db.Integer
+  none       Int @db.Integer
+
+  latency_mean  Float? @db.DoublePrecision
+  latency_stdev Float? @db.DoublePrecision
+
+  good     hub_order_goods @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  standard v_date_totals   @relation(fields: [date], references: [date], onDelete: Cascade)
+
+  @@unique([date])
+}
