@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "CommonJS",
+    "outDir": "lib",
+    "declaration": true,
+    "downlevelIteration": true,
+    "sourceMap": true,
+    "lib": [
+      "DOM",
+      "ES2015",
+    ],
+    "paths": {
+      "@wrtnlabs/os-api/lib/*": ["../../src/api/*"],
+      "@wrtnlabs/os-api/lib/": ["../../src/api"],
+      "@wrtnlabs/os-api": ["../../src/api"],
+    },
+    "stripInternal": true,
+  },
+  "include": ["../../src/api"],
+  "exclude": ["node_modules"],
+}
