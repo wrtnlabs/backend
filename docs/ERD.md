@@ -4385,7 +4385,7 @@ erDiagram
 "studio_application_snapshot_swaggers" }o--|| "hub_sale_snapshot_units" : unit
 "studio_application_snapshot_user_prompt_chips" }o--|| "studio_application_snapshots" : snapshot
 "studio_application_releases" |o--|| "studio_application_snapshots" : snapshot
-"studio_application_releases_llm_key" }|--|| "studio_application_releases" : relase
+"studio_application_releases_llm_key" }|--|| "studio_application_releases" : release
 "studio_application_release_documents" |o--|| "studio_application_releases" : release
 "studio_application_release_document_files" }o--|| "studio_application_release_documents" : document
 "hub_sale_snapshot_unit_swaggers" |o--|| "hub_sale_snapshot_units" : unit
@@ -4557,7 +4557,7 @@ ready-to-use examples of prompts that work well with the specific agent.
 
 **Properties**
 - `id`:
-- `studio_application_snapshot_id`: [studi_application_snapshots.id](#studi_application_snapshots) of the attributed snapshot
+- `studio_application_snapshot_id`: [studio_application_snapshots.id](#studio_application_snapshots) of the attributed snapshot
 - `icon_url`: The icon URL to be displayed.
 - `value`: Examples of prompts that the user can enter.
 - `sequence`: Sequence.
