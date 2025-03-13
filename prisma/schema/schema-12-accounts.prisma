@@ -1,0 +1,1228 @@
+/// Account entity.
+///
+/// `studio_accounts` is an entity that represents an account in the studio system. 
+/// An account is a single entity with a unique identifier code, and can own 
+/// {@link studio_repositories repositories}. For example, if the address of a 
+/// specific repository in GitHub is https://github.com/samchon/typia, then `samchon` 
+/// is the identifier of the account and the owner of the repository called `typia`.
+///
+/// And the account referred to here does not necessarily refer to a person.
+/// The account owner may be a {@link hub_members member}, but it may also be a 
+/// {@link studio_enterprises company}. For example, in the case of
+/// https://github.com/Microsoft/TypeScript, the account owner is not a person, but
+/// Microsoft, a company.
+///
+/// In addition, an account can change its owner. And when the owner changes, 
+/// the subject can also change from an individual to a company. For example, if 
+/// an account and repository that started as an individual becomes successful and 
+/// is later promoted to a company, this is the case.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_accounts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliated channel
+  hub_channel_id String @db.Uuid
+
+  /// Account holder member's {@link hub_members.id} ID.
+  ///
+  /// @format uuid
+  hub_member_id String? @db.Uuid
+
+  /// Account holder company ID {@link studio_enterprises.id}.
+  ///
+  /// @format uuid
+  studio_enterprise_id String? @db.Uuid
+
+  /// Identifier code.
+  ///
+  /// In the service, the part corresponding to a part of the URL address path.
+  code String @db.VarChar
+
+  /// Account creation date and time.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel    hub_channels        @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  member     hub_members?        @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  enterprise studio_enterprises? @relation(fields: [studio_enterprise_id], references: [id], onDelete: Cascade)
+
+  secrets                  studio_account_secrets[]
+  studio_account_schedules studio_account_schedules[]
+  studio_account_widgets   studio_account_widgets[]
+  studio_account_llm_keys  studio_account_llm_keys[]
+
+  @@unique([hub_channel_id, code])
+  @@unique([hub_member_id])
+  @@unique([studio_enterprise_id])
+  @@index([code])
+  @@index([created_at])
+}
+
+/// Corporate entity.
+///
+/// `studio_enterprises` is an entity that represents a company, and literally 
+/// means a subject participating in the studio system as a company unit. In the 
+/// case of a company, unlike {@link hub_members members}, it must have a 
+/// {@link studio_accounts account}.
+///
+/// In addition, a company has {@link studio_enterprise_employees employees} 
+/// as sub-entities, and {@link studio_enterprise_teams teams} composed of them. 
+/// And among these, the {@link studio_enterprise_team_companions members} of 
+/// the team can have the same {@link studio_repository_accesses access rights} 
+/// of the {@link studio_repositories repository} belonging to the company.
+///
+/// @namespace Account
+/// @erd Repositories
+/// @author Samchon
+model studio_enterprises {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who created the business
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Company name.
+  name String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record edit.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  channel  hub_channels  @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  employees studio_enterprise_employees[]
+  teams     studio_enterprise_teams[]
+  account   studio_accounts?
+
+  @@unique([hub_channel_id, name])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([created_at])
+}
+
+/// Employee entity within a company.
+///
+/// `studio_enterprise_employees` is an entity that represents employees belonging
+/// to a company. Employees belong to each {@link studio_enterprise_team team}
+/// within the company, and work as {@link studio_enterprise_team_commpanions},
+/// and are granted {@link studio_repository_accesses permission} from the company's
+/// {@link studio_repositories repository} as a team unit.
+///
+/// Please note that only those who have registered as {@link hub_members members}
+/// in this studio system can be
+/// {@link studio_enterprise_employee_appointments appointed}, and it is possible
+/// for one person to belong to multiple companies as an employee at the same time.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_enterprise_employees {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_enterprises.id} of the affiliated company
+  ///
+  /// @format uuid
+  studio_enterprise_id String @db.Uuid
+
+  /// Members of the target staff {@link hub_members.id}
+  ///
+  /// @format uuid
+  hub_member_id String @db.Uuid
+
+  /// Positions.
+  ///
+  /// - `owner`: Owner of the company. Has all privileges
+  /// - `manager`: Manager of the company, has privileges for general members
+  /// - `member`: General members
+  /// - `observer`: Observer, read-only
+  title String @db.VarChar
+
+  /// Date and time of first invitation to employees.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of acceptance of employee invitation.
+  approved_at DateTime? @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  enterprise studio_enterprises @relation(fields: [studio_enterprise_id], references: [id], onDelete: Cascade)
+  member     hub_members        @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  appointments studio_enterprise_employee_appointments[]
+  companions   studio_enterprise_team_companions[]
+
+  @@unique([studio_enterprise_id, hub_member_id])
+  @@index([studio_enterprise_id, created_at])
+  @@index([hub_member_id])
+}
+
+/// Employee appointment information.
+///
+/// `studio_enterprise_employee_appointments` is an entity that visualizes
+/// the history of appointment and position change information of
+/// {@link studio_enterprise_employees employees} within
+/// {@link studio_enterprises company}.
+///
+/// Therefore, this entity record is created once when a company appoints
+/// an employee, and is accumulated whenever the employee's position is changed.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_enterprise_employee_appointments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Target Employee's {@link studio_enterprise_employees.id}
+  ///
+  /// @format uuid
+  studio_enterprise_employee_id String @db.Uuid
+
+  /// {@link hub_customers.id} of customers who have appointed or changed
+  /// employees' positions
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// The position given.
+  title String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  employee studio_enterprise_employees @relation(fields: [studio_enterprise_employee_id], references: [id], onDelete: Cascade)
+  customer hub_customers               @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members                 @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([studio_enterprise_employee_id, created_at])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// Team information within the company.
+///
+/// `studio_enterprise_teams` is an entity that represents a team within the
+/// {@link studio_enterprises company}.
+///
+/// A team is a {@link studio_enterprise_team_companions member}, and has
+/// {@link hub_employees employees}, and can be active by receiving
+/// {@link studio_repository_accesses permission} from the company's
+/// {@link studio_repositories repository} as a team unit.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_enterprise_teams {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_enterprises.id} of the affiliated company
+  ///
+  /// @format uuid
+  studio_enterprise_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who created the team
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// The team identifier code.
+  ///
+  /// Part of the path in the URL address of the team page.
+  code String @db.VarChar
+
+  /// Team name.
+  name String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  enterprise studio_enterprises                  @relation(fields: [studio_enterprise_id], references: [id], onDelete: Cascade)
+  companions studio_enterprise_team_companions[]
+  customer   hub_customers                       @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member     hub_members                         @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_enterprise_id, code])
+  @@unique([studio_enterprise_id, name])
+  @@index([studio_enterprise_id, created_at])
+}
+
+/// Information about the members of a team within a company.
+///
+/// `studio_enterprise_team_companions` is an entity that visualizes which
+/// {@link studio_enterprise_employees employees} participate as members of
+/// each {@link studio_enterprise_teams team} that constitutes
+/// {@link studio_enterprises company}.
+///
+/// Note that employees participate as members of a team and are given a
+/// certain role, which may be different from their original position. Also,
+/// employees of a company can belong to multiple teams at the same time.
+///
+/// This is similar to how one {@link hub_members member} could be appointed as
+/// an employee to multiple companies at the same time.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_enterprise_team_companions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_enterprise_teams.id} of the affiliated team
+  ///
+  /// @format uuid
+  studio_enterprise_team_id String @db.Uuid
+
+  /// Target Employee's {@link studio_enterprise_employees.id}
+  ///
+  /// @format uuid
+  studio_enterprise_employee_id String @db.Uuid
+
+  /// Assigned roles.
+  ///
+  /// - `chief`: team leader
+  /// - `manager`: manager, has authority over general members
+  /// - `member`: general member
+  /// - `observer`: observer, can only read
+  role String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  team     studio_enterprise_teams     @relation(fields: [studio_enterprise_team_id], references: [id], onDelete: Cascade)
+  employee studio_enterprise_employees @relation(fields: [studio_enterprise_employee_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  appointments studio_enterprise_team_companion_appointments[]
+
+  @@unique([studio_enterprise_team_id, studio_enterprise_employee_id])
+  @@index([studio_enterprise_employee_id])
+  @@index([studio_enterprise_team_id, created_at])
+}
+
+/// Appointment information for team members within the company.
+///
+/// `studio_enterprise_team_companion_appointments` is an entity that
+/// visualizes the history of appointments and role changes for team members
+/// within the {@link studio_enterprises company}.
+///
+/// Therefore, this entity record is first created when a team appoints a member,
+/// and is accumulated whenever the member's role changes.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_enterprise_team_companion_appointments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_enterprise_team_companions.id} of the target team member
+  ///
+  /// @format uuid
+  studio_enterprise_team_companion_id String @db.Uuid
+
+  /// Customers who have assigned or changed roles for team members
+  /// {@link hub_customers.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// The role assigned.
+  role String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  companion studio_enterprise_team_companions @relation(fields: [studio_enterprise_team_companion_id], references: [id], onDelete: Cascade)
+  customer  hub_customers                     @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member    hub_members                       @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@index([studio_enterprise_team_companion_id, created_at])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// API key of LLM providers.
+///
+/// `studio_account_llm_keys` is an entity storing the API key of LLM 
+/// providers like "OpenAI" and "Anthropic" to be used in the
+/// {@link studio_accounts studio account} level.
+///
+/// @author Samchon
+model studio_account_llm_keys {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Belonged account's {@link studio_accounts.id} 
+  studio_account_id String @db.Uuid
+
+  /// Customer's {@link hub_customers.id} who've created the key.
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Identifier code in the belonged account.
+  code String @db.VarChar
+
+  /// Provider name like openai, anthropic.
+  provider String @db.VarChar
+
+  /// API key value.
+  value String @db.VarChar
+
+  /// Creation time of the record.
+  created_at DateTime @db.Timestamptz
+
+  /// Modification time of the record.
+  updated_at DateTime @db.Timestamptz
+
+  customer hub_customers   @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members     @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  account  studio_accounts @relation(fields: [studio_account_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_account_id, code])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// Secret variable set information registered to the studio account.
+///
+/// `studio_account_secrets` is an entity that visualizes a set of secret 
+/// variables registered to {@link studio_accounts studio account}. It is a concept 
+/// that collects multiple {@link studio_account_secret_values variable values} for 
+/// one secret key. And the secret variable referred to here refers to 
+/// authentication keys or passwords used for linking with other applications.
+///
+/// For reference, the main purpose of the secret variable is to be used as a 
+/// parameter or some property inserted into a connector or workflow function 
+/// within the {@link studio_repository_workflow_snapshots workflow program}.
+///
+/// It is identified through `IAstWorkflowSecretIdentifier` on the AST expression 
+/// node, and is mainly used to store authentication keys such as Google or Facebook.
+/// 
+/// And for this purpose, the variable value is encrypted and stored in the DB.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_secrets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_accounts.id} of the account you are affiliated with
+  ///
+  /// @format uuid
+  studio_account_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who created the variable
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Variable key.
+  key String @db.VarChar
+
+  /// title.
+  title String? @db.VarChar
+
+  /// Descriptive text.
+  description String?
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record edit.
+  updated_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  account  studio_accounts                @relation(fields: [studio_account_id], references: [id], onDelete: Cascade)
+  customer hub_customers                  @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members                    @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  values   studio_account_secret_values[]
+
+  @@unique([studio_account_id, key])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// Global variable value information registered in the studio account.
+///
+/// `studio_account_secret_values` is an entity that visualizes the individual 
+/// values of the {@link studio_account_secrets secret variable set} registered 
+/// in the {@link studio_accounts studio account}.
+///
+/// And the secret variable referred to here refers to authentication keys or 
+/// passwords used for linking with other applications. For reference, the main 
+/// purpose of the secret variable is to be used as a parameter or some property 
+/// inserted into a connector or workflow function within the 
+/// {@link studio_repository_workflow_snapshots workflow program}.
+///
+/// It is identified through `IAstWorkflowSecretIdentifier` on the AST expression 
+/// node, and is mainly used to store authentication keys such as Google or Facebook.
+///
+/// And for this purpose, the variable value is encrypted and stored in the DB.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_secret_values {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_account_secrets.id} of the set of attribution secret variables
+  ///
+  /// @format uuid
+  studio_account_secret_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer registering the record
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Identifier code.
+  ///
+  /// Usually used are account emails or IDs of linked target services.
+  code String @db.VarChar
+
+  /// Variable value.
+  value String @db.VarChar
+
+  /// Batch order.
+  sequence Int @db.Integer
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Record expiration date and time.
+  expired_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  secret    studio_account_secrets                  @relation(fields: [studio_account_secret_id], references: [id], onDelete: Cascade)
+  customer  hub_customers                           @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member    hub_members                             @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  scopes    studio_account_secret_value_scopes[]
+  sandboxes studio_account_secret_value_sandboxes[]
+
+  @@unique([studio_account_secret_id, code])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// Scope for the secret global variable value of the studio account.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_secret_value_scopes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_account_secret_values.id} of the attribute secret variable value
+  ///
+  /// @format uuid
+  studio_account_secret_value_id String @db.Uuid
+
+  /// Scope value.
+  value String @db.VarChar
+
+  /// Batch order.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  secretValue studio_account_secret_values @relation(fields: [studio_account_secret_value_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_account_secret_value_id, value])
+}
+
+/// Security-related entity not described in ERD.
+///
+/// @hidden
+model studio_account_secret_value_sandboxes {
+  id                             String   @id @db.Uuid
+  studio_account_secret_value_id String   @db.Uuid
+  source_table                   String   @db.VarChar
+  source_id                      String   @db.Uuid
+  created_at                     DateTime @db.Timestamptz
+
+  value studio_account_secret_values @relation(fields: [studio_account_secret_value_id], references: [id], onDelete: Cascade)
+
+  @@unique([source_table, source_id, studio_account_secret_value_id])
+  @@index([studio_account_secret_value_id])
+}
+
+/// Schedule information set in the studio account.
+///
+/// `studio_account_schedules` is an entity that visualizes the schedule 
+/// information set in {@link studio_accounts studio account}. And the schedule 
+/// here refers to {@link studio_repository_release_nodes release nodes} 
+/// that are repeatedly executed based on a certain cycle.
+///
+/// For reference, the target release node must be of type 
+/// {@link studio_repository_workflow_snapshots workflow}, and the belonging 
+/// {@link studio_repository_releases release} can be an old version.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_schedules {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_accounts.id} of the account you are affiliated with
+  ///
+  /// @format uuid
+  studio_account_id String @db.Uuid
+
+  /// {@link studio_release_nodes.id} of the release node to run on
+  ///
+  /// @format uuid
+  studio_repository_release_node_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who created the schedule
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// A list of argument values to be entered for the parameter.
+  ///
+  /// Encrypted because it may contain personal information.
+  arguments String
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  account                                           studio_accounts                                     @relation(fields: [studio_account_id], references: [id], onDelete: Cascade)
+  customer                                          hub_customers                                       @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  intervals                                         studio_account_schedule_intervals[]
+  of_good                                           studio_account_schedule_of_goods?
+  studio_account_widget_tile_component_of_schedules studio_account_widget_tile_component_of_schedules[]
+
+  @@index([studio_account_id, created_at])
+  @@index([studio_repository_release_node_id])
+  @@index([hub_customer_id])
+}
+
+/// Schedule information for ordered items set in your studio account.
+///
+/// @author Asher
+/// @namespace Account
+model studio_account_schedule_of_goods {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_order_goods.id}
+  ///
+  /// @format uuid of the ordered product
+  hub_order_good_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id} of the affiliated unit
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  base studio_account_schedules @relation(fields: [id], references: [id], onDelete: Cascade)
+  good hub_order_goods          @relation(fields: [hub_order_good_id], references: [id], onDelete: Cascade)
+  unit hub_sale_snapshot_units  @relation(fields: [hub_sale_snapshot_unit_id], references: [id], onDelete: Cascade)
+}
+
+/// Execution interval information for scheduling information set in the studio account.
+///
+/// @namespace Account
+/// @author Leo
+model studio_account_schedule_intervals {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// The id of the target scheduler information.
+  ///
+  /// @format uuid
+  studio_account_schedule_id String @db.Uuid
+
+  /// Scheduler execution interval information.
+  duration String @db.VarChar
+
+  /// The first start time of the schedule.
+  started_at DateTime? @db.Timestamptz
+
+  /// Suspend time.
+  paused_at DateTime? @db.Timestamptz
+
+  /// Schedule interruption date.
+  closed_at DateTime? @db.Timestamptz
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  schedule studio_account_schedules                       @relation(fields: [studio_account_schedule_id], references: [id], onDelete: Cascade)
+  mv_next  mv_studio_account_schedules_next_started_time?
+
+  @@index([studio_account_schedule_id])
+  @@index([started_at])
+}
+
+/// Studio Widget.
+///
+/// In the studio, each {@link studio_accounts account} can create widgets 
+/// according to their purpose, and place {@link studio_account_widget_tiles tiles} 
+/// linked to {@link studio_repository_release_nodes release nodes} in various ways.
+///
+/// The codes for the currently supported widgets are as follows, but may change 
+/// in the future.
+///
+/// - general
+/// - desktop
+/// - mobile
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_widgets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_accounts.id} of the account you are affiliated with
+  ///
+  /// @format uuid
+  studio_account_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who created the widget
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Widget code.
+  ///
+  /// The following codes are currently used as fixed codes, but are not yet confirmed.
+  ///
+  /// - general
+  /// - desktop
+  /// - mobile
+  code String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time the record was modified.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  account  studio_accounts               @relation(fields: [studio_account_id], references: [id], onDelete: Cascade)
+  customer hub_customers                 @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  tiles    studio_account_widget_tiles[]
+
+  @@unique([studio_account_id, code])
+  @@index([hub_customer_id])
+}
+
+/// Studio's widget tiles.
+///
+/// `studio_account_widget_tiles` is an entity that visualizes individual 
+/// tiles that are placed in the {@link studio_account_widgets widget} that can 
+/// be configured for each {@link studio_accounts account} in the studio.
+///
+/// When creating a widget record, you can place it by specifying a 
+/// {@link studio_repository_release_nodes release node} or an entity record 
+/// related to it, and when reading it in the application, the most successful 
+/// return value among the 
+/// {@link studio_repository_release_node_histories function call history} of the 
+/// release node linked to the target entity is used.
+///
+/// - {@link studio_repository_release_node_histories}
+/// - {@link studio_account_schedules}
+///
+/// In addition, each widget tile has its own geometry system, and therefore 
+/// the API pagination also has a unique characteristic that is performed 
+/// according to the geometry coordinates and size area.
+///
+/// In addition, the placement coordinates can be changed at any time by the API 
+/// push function, even if you do not change them by directly specifying a 
+/// specific widget. The push (bash) mentioned here means that when placing 
+/// a new tile (or moving an existing tile), the overlapping tile is pushed to 
+/// the bottom (Y axis). Of course, it is also possible for other tiles to be 
+/// pushed in a chain by the pushed tile.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_widget_tiles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_account_widgets.id} of the attributed widget
+  ///
+  /// @format uuid
+  studio_account_widget_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the customer who created the tile
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of coordinate/size modification.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  widget     studio_account_widgets                  @relation(fields: [studio_account_widget_id], references: [id], onDelete: Cascade)
+  customer   hub_customers                           @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  component  studio_account_widget_tile_components?
+  geometries studio_account_widget_tile_geometries[]
+
+  @@index([studio_account_widget_id])
+  @@index([hub_customer_id])
+}
+
+/// Elements placed on the Studio widget tile.
+///
+/// `studio_account_widget_tile_components` is an entity that visualizes the 
+/// components placed on the Studio's {@link studio_widget_tiles widget tile}.
+///
+/// And each widget tile can place {@link studio_repository_release_nodes release nodes} 
+/// and {@link studio_account_schedules schedule routines} or
+/// {@link studio_repository_buckets workflows in progress},
+/// which are divided into subtype entities according to their type with the `kind` 
+/// property as a discriminator.
+///
+/// - `release-node`: {@link studio_account_widget_tile_component_of_release_nodes}
+/// - `release-node-agent`: {@link studio_account_widget_tile_component_of_release_nodes} 
+/// - `schedule`: {@link studio_account_widget_tile_component_of_schedules} 
+/// - `workflow`: {@link studio_account_widget_ tile_component_of_workflows} 
+/// 
+/// @namespace Account 
+/// @author Leo
+model studio_account_widget_tile_components {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// {@link studio_repository_widget_tiles.id} of the attributed widget tiles
+  studio_account_widget_tile_id String @db.Uuid
+
+  /// Type of component.
+  ///
+  /// Discriminator for the type of component placed on the widget tile.
+  ///
+  /// - chatbot: when the workflow is used as a chat agent
+  /// - routine: when the schedule routine is placed as a component
+  /// - general: general workflow
+  /// - snapshot: snapshot of the workflow in progress
+  kind String @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  tile            studio_account_widget_tiles                            @relation(fields: [studio_account_widget_tile_id], references: [id], onDelete: Cascade)
+  of_schedule     studio_account_widget_tile_component_of_schedules?
+  of_release_node studio_account_widget_tile_component_of_release_nodes?
+  of_workflow     studio_account_widget_tile_component_of_workflows?
+
+  @@unique([studio_account_widget_tile_id])
+}
+
+/// Release node information placed on the studio widget tile.
+///
+/// `studio_account_widget_tile_component_of_release_nodes` is a subtype entity of
+/// {@link studio_account_widget_tile_components},
+/// and is an entity that represents
+/// {@link studio_repository_release_nodes release nodes} placed on the studio's 
+/// {@link studio_account_widget_tiles widget tile}.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_widget_tile_component_of_release_nodes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_repository_release_nodes.id} of the release nodes placed 
+  /// on the tile
+  ///
+  /// @format uuid
+  studio_repository_release_node_id String @db.Uuid
+
+  /// A list of arguments to use when executing the release node function.
+  ///
+  /// Encrypted because it may contain personal information.
+  arguments String
+
+  //----
+  // RELATIONS
+  //----
+  base studio_account_widget_tile_components @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([studio_repository_release_node_id])
+}
+
+/// Schedule information placed on the studio widget tile.
+///
+/// `studio_account_widget_tile_component_of_schedules` is a subtype entity of
+/// {@link studio_account_widget_tile_components}, and is an entity that visualizes
+/// {@link studio_account_schedules schedules} placed on the studio's 
+/// {@link studio_account_widget_tiles widget tile}.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_widget_tile_component_of_schedules {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_account_schedules.id} of the schedules placed on the tile
+  studio_account_schedule_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  base     studio_account_widget_tile_components @relation(fields: [id], references: [id], onDelete: Cascade)
+  schedule studio_account_schedules              @relation(fields: [studio_account_schedule_id], references: [id], onDelete: Cascade)
+
+  @@index([studio_account_schedule_id])
+}
+
+/// Workflow information in progress placed on the Studio widget tile.
+///
+/// `studio_account_widget_tile_component_of_workflows` is a subtype entity of
+/// {@link studio_account_widget_tile_components}, which is an entity that 
+/// visualizes {@link studio_repository_buckets Workflows in Progress} placed 
+/// on the Studio's {@link studio_account_widget_tiles widget tile}.
+///
+/// @namespace Account
+/// @author Samchon
+model studio_account_widget_tile_component_of_workflows {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_repository_workflow_snapshots.id} of the workflow you're 
+  /// working on, placed on the tile.
+  studio_repository_workflow_id String @db.Uuid
+
+  /// List of arguments.
+  ///
+  /// A list of arguments to use when executing the workflow function being worked on.
+  ///
+  /// Encrypted because it may contain personal information.
+  arguments String
+
+  //----
+  // RELATIONS
+  //----
+  base studio_account_widget_tile_components @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@index([studio_repository_workflow_id])
+}
+
+/// Widget tile breakpoint-specific layout information.
+///
+/// `studio_account_widget_tile_geometries` is an entity that visualizes 
+/// layout information for each breakpoint of the 
+/// {@link studio_account_widget_tile widget tile}.
+///
+/// And the breakpoints mentioned here mean breakpoints based on the responsive UI.
+///
+/// @author Samchon
+/// @namespace Account
+model studio_account_widget_tile_geometries {
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_repository_widget_tiles.id} of the attributed widget tile
+  ///
+  /// @format uuid
+  studio_account_widget_tile_id String @db.Uuid
+
+  /// Breakpoints based on responsive UI.
+  ///
+  /// - xs: 1 space
+  /// - sm: 2 spaces
+  /// - md: 4 spaces
+  /// - lg: 4 spaces
+  breakpoint String @db.VarChar
+
+  /// X-axis coordinate.
+  ///
+  /// @minimum 0
+  position_x Int
+
+  /// Y-axis coordinate.
+  ///
+  /// @minimum 0
+  position_y Int
+
+  /// X-axis size.
+  ///
+  /// @exclusiveMinimum 0
+  scale_x Int
+
+  /// Y axis size.
+  ///
+  /// @exclusiveMaximum 0
+  scale_y Int
+
+  /// @hidden
+  edge_x Int
+
+  /// @hidden
+  edge_y Int
+
+  /// Whether to fix the coordinates.
+  ///
+  /// If this property value is set to `true` and the target tile's coordinates 
+  /// are fixed, it will not be affected by future pushing of other tiles.
+  ///
+  /// This means that the coordinates are completely fixed.
+  pinned Boolean @db.Boolean
+
+  tile studio_account_widget_tiles @relation(fields: [studio_account_widget_tile_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_account_widget_tile_id, breakpoint])
+  @@index([studio_account_widget_tile_id, breakpoint, position_x, position_y, edge_x, edge_y])
+}
+
+/// Scheduled next run time information.
+///
+/// @hidden
+model mv_studio_account_schedules_next_started_time {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_account_schedule_intervals.id}
+  ///
+  /// @format uuid of the attributed scheduling interval information
+  studio_account_schedule_interval_id String @db.Uuid
+
+  /// The date on which the next scheduled task will be performed.
+  ///
+  /// @format datetime
+  next_started_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  studio_account_schedule_interval studio_account_schedule_intervals @relation(fields: [studio_account_schedule_interval_id], references: [id], onDelete: Cascade)
+
+  @@unique([studio_account_schedule_interval_id])
+}

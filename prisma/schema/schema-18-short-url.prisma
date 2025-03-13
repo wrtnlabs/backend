@@ -1,0 +1,25 @@
+/// Short URL information.
+///
+/// Entity that converts the original URL into a short URL and stores it.
+///
+/// @hidden
+/// @author Leo
+model short_urls {
+  //----
+  // PROPERTIES
+  //----
+  /// Primary Key.
+  id String @id @db.Uuid
+
+  /// Original URL.
+  original_url String
+
+  /// Short URL code.
+  code String
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  @@unique([code])
+  @@index([created_at])
+}

@@ -1,0 +1,56 @@
+/// @hidden
+view v_date_hours {
+  date DateTime @id @db.Timestamptz
+
+  calls mv_hub_order_good_call_aggregate_per_hours[]
+  views mv_hub_sale_snapshot_view_aggregate_per_hours[]
+}
+
+/// @hidden
+view v_date_days {
+  date DateTime @id @db.Date
+
+  calls     mv_hub_order_good_call_aggregate_per_days[]
+  views     mv_hub_sale_snapshot_view_aggregate_per_days[]
+  goods     mv_hub_sale_order_good_aggregate_per_days[]
+  inquiries mv_hub_sale_snapshot_inquiry_aggregate_per_days[]
+}
+
+/// @hidden
+view v_date_weeks {
+  date DateTime @id @db.Date
+
+  calls mv_hub_order_good_call_aggregate_per_weeks[]
+  views mv_hub_sale_snapshot_view_aggregate_per_weeks[]
+}
+
+/// @hidden
+view v_date_months {
+  date DateTime @id @db.Date
+
+  calls mv_hub_order_good_call_aggregate_per_months[]
+  views mv_hub_sale_snapshot_view_aggregate_per_months[]
+}
+
+/// @hidden
+view v_date_quarters {
+  date DateTime @id @db.Date
+
+  calls mv_hub_order_good_call_aggregate_per_quarters[]
+  views mv_hub_sale_snapshot_view_aggregate_per_quarters[]
+}
+
+/// @hidden
+view v_date_years {
+  date DateTime @id @db.Date
+
+  calls mv_hub_order_good_call_aggregate_per_years[]
+  views mv_hub_sale_snapshot_view_aggregate_per_years[]
+}
+
+/// @hidden
+view v_date_totals {
+  date DateTime @id @db.Date
+
+  callas mv_hub_order_good_call_aggregate_per_totals[]
+}

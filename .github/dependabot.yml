@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 25
+    versioning-strategy: increase
+    allow:
+      - dependency-name: "@nestia/*"
+      - dependency-name: "@nestjs/*"
+      - dependency-name: "@prisma/*"
+      - dependency-name: "@samchon/openapi"
+      - dependency-name: "nestia"
+      - dependency-name: "prisma"
+      - dependency-name: "prisma-markdown"
+      - dependency-name: "tstl"
+      - dependency-name: "typia"
+      - dependency-name: "typescript"
+      - dependency-name: "typescript-transform-paths"
+      - dependency-name: "ts-patch"
+    groups:
+      Ecosystem:
+        patterns:
+          - "@agentica/*"
+          - "@nestia/*"
+          - "@samchon/openapi"
+          - "nestia"
+          - "tstl"
+          - "typia"
+          - "prisma-markdown"
+      NestJS:
+        patterns:
+          - "@nestjs/*"
+      Prisma:
+        patterns:
+          - "@prisma/*"
+          - "prisma"
+      TypeScript:
+        patterns:
+          - "typescript"
+          - "typescript-transform-paths"
+          - "ts-patch"

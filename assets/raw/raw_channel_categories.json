@@ -1,0 +1,242 @@
+[
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "생산성"},
+      {"lang_code": "en", "name": "Productivity"},
+      {"lang_code": "ja", "name": "生産性"}
+    ],
+    "background_color": "blue",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%89%E1%85%A2%E1%86%BC%E1%84%89%E1%85%A1%E1%86%AB%E1%84%89%E1%85%A5%E1%86%BC.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "교육"},
+      {"lang_code": "en", "name": "Education"},
+      {"lang_code": "ja", "name": "教育"}
+    ],
+    "background_color": "blue",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%AD%E1%84%8B%E1%85%B2%E1%86%A8.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "마케팅 / 광고"},
+      {"lang_code": "en", "name": "Marketing / Advertising"},
+      {"lang_code": "ja", "name": "マーケティング / 広告"}
+    ],
+    "background_color": "blue",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%86%E1%85%A1%E1%84%8F%E1%85%A6%E1%84%90%E1%85%B5%E1%86%BC-%E1%84%80%E1%85%AA%E1%86%BC%E1%84%80%E1%85%A9.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "작문"},
+      {"lang_code": "en", "name": "Writing"},
+      {"lang_code": "ja", "name": "作文"}
+    ],
+    "background_color": "inspired_red",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8C%E1%85%A1%E1%86%A8%E1%84%86%E1%85%AE%E1%86%AB.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "학술 / 연구"},
+      {"lang_code": "en", "name": "Academia / Research"},
+      {"lang_code": "ja", "name": "学術 / 研究"}
+    ],
+    "background_color": "inspired_red",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%92%E1%85%A1%E1%86%A8%E1%84%89%E1%85%AE%E1%86%AF-%E1%84%8B%E1%85%A7%E1%86%AB%E1%84%80%E1%85%AE.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "비즈니스"},
+      {"lang_code": "en", "name": "Business"},
+      {"lang_code": "ja", "name": "ビジネス"}
+    ],
+    "background_color": "inspired_red",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%87%E1%85%B5%E1%84%8C%E1%85%B3%E1%84%82%E1%85%B5%E1%84%89%E1%85%B3.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "IT / 개발"},
+      {"lang_code": "en", "name": "IT / Development"},
+      {"lang_code": "ja", "name": "IT / 開発"}
+    ],
+    "background_color": "pink",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/IT-%E1%84%80%E1%85%A2%E1%84%87%E1%85%A1%E1%86%AF.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "설문"},
+      {"lang_code": "en", "name": "Survey"},
+      {"lang_code": "ja", "name": "アンケート"}
+    ],
+    "background_color": "pink",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%B3%E1%86%B7%E1%84%8B%E1%85%B2%E1%86%BC.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "이미지 / 비디오"},
+      {"lang_code": "en", "name": "Image / Video"},
+      {"lang_code": "ja", "name": "画像 / ビデオ"}
+    ],
+    "background_color": "pink",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8B%E1%85%B5%E1%84%86%E1%85%B5%E1%84%8C%E1%85%B5-%E1%84%87%E1%85%B5%E1%84%83%E1%85%B5%E1%84%8B%E1%85%A9.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "멘토링 / 코칭"},
+      {"lang_code": "en", "name": "Mentoring / Coaching"},
+      {"lang_code": "ja", "name": "メンタリング / コーチング"}
+    ],
+    "background_color": "green",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%86%E1%85%A6%E1%86%AB%E1%84%90%E1%85%A9%E1%84%85%E1%85%B5%E1%86%BC.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "건강 / 피트니스"},
+      {"lang_code": "en", "name": "Health / Fitness"},
+      {"lang_code": "ja", "name": "健康 / フィットネス"}
+    ],
+    "background_color": "green",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%A5%E1%86%AB%E1%84%80%E1%85%A1%E1%86%BC-%E1%84%91%E1%85%B5%E1%84%90%E1%85%B3%E1%84%82%E1%85%B5%E1%84%89%E1%85%B3.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "뉴스 / 미디어"},
+      {"lang_code": "en", "name": "News / Media"},
+      {"lang_code": "ja", "name": "ニュース / メディア"}
+    ],
+    "background_color": "green",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%82%E1%85%B2%E1%84%89%E1%85%B3-%E1%84%86%E1%85%B5%E1%84%83%E1%85%B5%E1%84%8B%E1%85%A5.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "데이터 / 애널리틱스"},
+      {"lang_code": "en", "name": "Data / Analytics"},
+      {"lang_code": "ja", "name": "データ / アナリティクス"}
+    ],
+    "background_color": "apricot",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%83%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%90%E1%85%A5-%E1%84%8B%E1%85%A2%E1%84%82%E1%85%A5%E1%86%AF%E1%84%85%E1%85%B5%E1%84%90%E1%85%B5%E1%86%A8%E1%84%89%E1%85%B3.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "취업"},
+      {"lang_code": "en", "name": "Job Seeking"},
+      {"lang_code": "ja", "name": "就職"}
+    ],
+    "background_color": "apricot",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8E%E1%85%B1%E1%84%8B%E1%85%A5%E1%86%B8.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "커뮤니케이션"},
+      {"lang_code": "en", "name": "Communication"},
+      {"lang_code": "ja", "name": "コミュニケーション"}
+    ],
+    "background_color": "apricot",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8F%E1%85%A5%E1%84%86%E1%85%B2%E1%84%82%E1%85%B5%E1%84%8F%E1%85%A6%E1%84%8B%E1%85%B5%E1%84%89%E1%85%A7%E1%86%AB.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "패션"},
+      {"lang_code": "en", "name": "Fashion"},
+      {"lang_code": "ja", "name": "ファッション"}
+    ],
+    "background_color": "black",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%91%E1%85%A2%E1%84%89%E1%85%A7%E1%86%AB.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "금융"},
+      {"lang_code": "en", "name": "Finance"},
+      {"lang_code": "ja", "name": "金融"}
+    ],
+    "background_color": "black",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%B3%E1%86%B7%E1%84%8B%E1%85%B2%E1%86%BC.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "계약"},
+      {"lang_code": "en", "name": "Contracts"},
+      {"lang_code": "ja", "name": "契約"}
+    ],
+    "background_color": "black",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%B3%E1%86%B7%E1%84%8B%E1%85%B2%E1%86%BC.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "여행"},
+      {"lang_code": "en", "name": "Travel"},
+      {"lang_code": "ja", "name": "旅行"}
+    ],
+    "background_color": "violet",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8B%E1%85%A7%E1%84%92%E1%85%A2%E1%86%BC+(1).png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "그래픽 / 디자인"},
+      {"lang_code": "en", "name": "Graphics / Design"},
+      {"lang_code": "ja", "name": "グラフィック / デザイン"}
+    ],
+    "background_color": "violet",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%B3%E1%84%85%E1%85%A2%E1%84%91%E1%85%B5%E1%86%A8-%E1%84%83%E1%85%B5%E1%84%8C%E1%85%A1%E1%84%8B%E1%85%B5%E1%86%AB.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "음악"},
+      {"lang_code": "en", "name": "Music"},
+      {"lang_code": "ja", "name": "音楽"}
+    ],
+    "background_color": "violet",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8B%E1%85%B3%E1%86%B7%E1%84%8B%E1%85%A1%E1%86%A8.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "엔터테인먼트"},
+      {"lang_code": "en", "name": "Entertainment"},
+      {"lang_code": "ja", "name": "エンターテイメント"}
+    ],
+    "background_color": "yellow",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8B%E1%85%A6%E1%86%AB%E1%84%90%E1%85%A5%E1%84%90%E1%85%A6%E1%84%8B%E1%85%B5%E1%86%AB%E1%84%86%E1%85%A5%E1%86%AB%E1%84%90%E1%85%B3.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "이커머스"},
+      {"lang_code": "en", "name": "E-commerce"},
+      {"lang_code": "ja", "name": "EC"}
+    ],
+    "background_color": "yellow",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%8B%E1%85%B5%E1%84%8F%E1%85%A5%E1%84%86%E1%85%A5%E1%84%89%E1%85%B3.png"
+  },
+  {
+    "channel": "wrtn",
+    "lang_names": [
+      {"lang_code": "ko", "name": "라이프스타일"},
+      {"lang_code": "en", "name": "Lifestyle"},
+      {"lang_code": "ja", "name": "ライフスタイル"}
+    ],
+    "background_color": "yellow",
+    "background_image_url": "https://unknown.s3.ap-northeast-2.amazonaws.com/common/categories/%E1%84%80%E1%85%B3%E1%86%B7%E1%84%8B%E1%85%B2%E1%86%BC.png"
+  }
+]

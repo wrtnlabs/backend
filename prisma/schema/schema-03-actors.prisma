@@ -1,0 +1,830 @@
+/// Customer information, but based on access criteria, not people.
+///
+/// `hub_customers` is an entity that literally embodies the information of 
+/// those who participated in the market as customers. `hub_customers` issues 
+/// a new record for each access, even if they are the same person.
+///
+/// The first purpose is to track the customer inflow path in detail, 
+/// and the second is to prevent cases where the same person enters as a non-member, 
+/// diligently puts {@link hub_sales items} in the 
+/// {@link hub_cart_commodities shopping cart} in advance, and only then does 
+/// {@link hub_citizens real name verification} or 
+/// {@link hub_members membership registration/login} at the moment of payment. 
+/// Lastly, the same person also accesses {@link hub_external_users external service},
+/// purchases {@link hub_orders}, creates multiple {@link hub_members accounts} 
+/// to make purchases, purchases after only authenticating their real names as 
+/// non-members, and sometimes acts as a {@link hub_sellers seller} or 
+/// {@link hub_administrators administrator}, to accurately track the activities that 
+/// one person does on the exchange in various ways.
+///
+/// Therefore, `hub_customers` can have multiple records with the same 
+/// {@link hub_citizens} or {@link hub_members} and {@link hub_external_users}. 
+/// Also, if a customer signs up for membership after authenticating their real name, 
+/// or signs up for our service after being an external service user, all related 
+/// records are changed at once. Therefore, customer identification and tracking 
+/// can be done very systematically.
+///
+/// @namespace Actors
+/// @erd Deposits
+/// @author Samchon
+model hub_customers {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid /// @format uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String? @db.Uuid /// @format uuid
+
+  /// {@link hub_external_users.id}
+  ///
+  /// @format uuid of external users
+  hub_external_user_id String? @db.Uuid /// @format uuid
+
+  /// {@link hub_citizens.id} of the citizenship
+  ///
+  /// @format uuid
+  hub_citizen_id String? @db.Uuid /// @format uuid
+
+  /// Access address
+  ///
+  /// Use {@link window.location.href}
+  ///
+  /// @format uri
+  href String @db.VarChar(80000)
+
+  /// Referrer URL on browser.
+  ///
+  /// Use {@link window.document.referrer}
+  ///
+  /// @format uri
+  referrer String @db.VarChar(80000)
+
+  /// IP 주소.
+  ///
+  /// @pattern ((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]| 25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0- 9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0 -9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{ 1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2 [0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-F a-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[ 0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1 -9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((: [0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5] |2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d |[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3} (((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}: ((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4] \d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1 ,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4 }){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5 ]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A -Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa -f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\ .(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)) |(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0, 5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0 -4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))
+  ip String @db.VarChar
+
+  /// Whether read-only or not.
+  readonly Boolean
+
+  lang_code String? @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel       hub_channels        @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  member        hub_members?        @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  external_user hub_external_users? @relation(fields: [hub_external_user_id], references: [id], onDelete: Cascade)
+  citizen       hub_citizens?       @relation(fields: [hub_citizen_id], references: [id], onDelete: Cascade)
+
+  hub_deposit_charges                           hub_deposit_charges[]
+  hub_sale_snapshot_inquiries                   hub_sale_snapshot_inquiries[]
+  hub_sale_snapshot_inquiry_comments            hub_sale_snapshot_inquiry_comments[]
+  hub_orders                                    hub_orders[]
+  hub_order_good_issues                         hub_order_good_issues[]
+  hub_order_good_issue_comments                 hub_order_good_issue_comments[]
+  hub_order_good_issue_fee_accepts              hub_order_good_issue_fee_accepts[]
+  hub_carts                                     hub_carts[]
+  hub_coupon_tickets                            hub_coupon_tickets[]
+  hub_sales                                     hub_sales[]
+  hub_sale_audits                               hub_sale_audits[]
+  hub_sale_audit_emendations                    hub_sale_audit_emendations[]
+  hub_sale_audit_rejections                     hub_sale_audit_rejections[]
+  hub_sale_audit_approvals                      hub_sale_audit_approvals[]
+  hub_sale_audit_comments                       hub_sale_audit_comments[]
+  hub_sale_snapshot_inquiry_answers             hub_sale_snapshot_inquiry_answers[]
+  hub_order_good_issue_fees                     hub_order_good_issue_fees[]
+  hub_deposit_donations                         hub_deposit_donations[]
+  hub_deposits                                  hub_deposits[]
+  studio_enterprises                            studio_enterprises[]
+  studio_enterprise_employee_appointments       studio_enterprise_employee_appointments[]
+  studio_enterprise_team_companion_appointments studio_enterprise_team_companion_appointments[]
+  hub_authenticate_tokens                       hub_authenticate_tokens[]
+  hub_coupons                                   hub_coupons[]
+  studio_enterprise_teams                       studio_enterprise_teams[]
+  hub_member_elites                             hub_member_elites[]
+  hub_member_villains                           hub_member_villains[]
+  hub_sale_snapshot_view_history                hub_sale_snapshot_view_histories[]
+  hub_bookmark_sales                            hub_bookmark_sales[]
+  studio_account_secrets                        studio_account_secrets[]
+  studio_account_secret_values                  studio_account_secret_values[]
+  studio_account_schedules                      studio_account_schedules[]
+  hub_sale_snapshot_inquiry_likes               hub_sale_snapshot_inquiry_likes[]
+  studio_account_widgets                        studio_account_widgets[]
+  studio_account_widget_tiles                   studio_account_widget_tiles[]
+  hub_push_message_receiver_histories           hub_push_message_histories[]                    @relation("hub_push_message_histories_receiver")
+  hub_push_message_reader_histories             hub_push_message_histories[]                    @relation("hub_push_message_histories_reader")
+  studio_meta_chat_sessions                     studio_meta_chat_sessions[]
+  studio_meta_chat_session_connections          studio_meta_chat_session_connections[]
+  studio_meta_chat_session_shares               studio_meta_chat_session_shares[]
+  studio_account_llm_keys                       studio_account_llm_keys[]
+  studio_applications                           studio_applications[]
+  hub_customer_email_verifications              hub_customer_email_verifications[]
+
+  @@index([hub_channel_id, created_at])
+  @@index([hub_citizen_id, created_at])
+  @@index([hub_external_user_id, created_at])
+  @@index([hub_member_id, created_at])
+  @@index([href])
+  @@index([referrer])
+  @@index([ip])
+  @@index([created_at])
+}
+
+/// A personal API KEY that can access the API.
+///
+/// @namespace Actors
+/// @author Asher
+model hub_authenticate_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid.
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid.
+  hub_channel_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_customers.id}
+  ///
+  /// @format uuid.
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// API KEY title.
+  title String @db.VarChar
+
+  /// API KEY value.
+  value String @db.VarChar
+
+  /// KEY expiration date.
+  ///
+  /// If null, unlimited KEY with no expiration date.
+  expired_at DateTime? @db.Date
+
+  /// Record creation date and time
+  created_at DateTime @db.Timestamptz
+
+  /// Record deletion date
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel  hub_channels  @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  // INDEX -> 굳이 title 세세하게 검색 안 해도 될 듯
+  @@unique([value])
+  @@index([hub_channel_id])
+  @@index([hub_member_id])
+  @@index([hub_customer_id])
+}
+
+/// External user information.
+///
+/// An entity for when this system is linked to an external service and
+/// their users are accepted as customers of this service.
+///
+/// For reference, customers who access from an external service must have
+/// this record, and the external service user is identified through the
+/// two attributes `application` and `uid`. If a customer who accessed from
+/// an external service completes {@link hub_citizens real-name authentication}
+/// from this service, the external service user starts with the real-name
+/// authentication completed whenever he or she re-accesses this service and
+/// issues a new {@link hub_customers customer} authentication token.
+/// This is also the case for {@link hub_members membership} registration.
+///
+/// And `password` is a password issued to the user by the external service system
+/// (so-called user permanent authentication token), and is never an actual user
+/// password. However, it is used to determine whether a customer who entered the
+/// same `application` and `uid` as the current external system user is
+/// a correct external system user or a violation.
+///
+/// In addition, additional information received from external services can be
+/// recorded in the `data` field in JSON format.
+///
+/// @namespace Actors
+/// @author Samchon
+model hub_external_users {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliated channel
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_citizens.id} of the citizens
+  hub_citizen_id String? @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String? @db.Uuid
+
+  /// {@link hub_external_user_contents.id}
+  ///
+  /// @format uuid of external user content
+  hub_external_user_content_id String? @db.Uuid
+
+  /// The identifier code of the external service.
+  ///
+  /// It is most likely the same as {@link hub_channels.code}.
+  application String @db.VarChar
+
+  /// An identifier key for that user in an external service.
+  uid String @db.VarChar
+
+  /// User nickname on external services.
+  nickname String @db.VarChar
+
+  /// Additional information from external services.
+  data String?
+
+  /// System password for external service users.
+  ///
+  /// This is a password issued by the external service to the user,
+  /// and is never the actual user password. However, it is used to determine
+  /// whether a customer who entered the same `application` and `code` as the
+  /// current external system user is considered a valid external system user
+  /// or a violation.
+  password String @db.VarChar
+
+  /// Record creation date and time (first external user authentication date and time)
+  created_at DateTime
+
+  member  hub_members?                @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  channel hub_channels                @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  citizen hub_citizens?               @relation(fields: [hub_citizen_id], references: [id], onDelete: Cascade)
+  content hub_external_user_contents? @relation(fields: [hub_external_user_content_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  customers hub_customers[]
+
+  @@unique([hub_channel_id, application, uid])
+  @@index([application, created_at])
+  @@index([created_at])
+  @@index([nickname(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+/// Additional information for external user content.
+///
+/// `hub_external_user_contents` is an entity that records additional information for {@link hub_external_users external user content}.
+///
+/// @namespace Actors
+/// @author Asher
+model hub_external_user_contents {
+  //----
+  // COLUMNS
+  //----
+  id String @id @db.Uuid
+
+  /// List of user job information.
+  jobs String? @db.VarChar
+
+  /// User gender information.
+  gender String? @db.VarChar
+
+  /// User's date of birth.
+  birthYear Int? @db.Integer
+
+  /// User interest information.
+  interests String? @db.VarChar
+
+  /// User's primary provider information.
+  provider String? @db.VarChar
+
+  /// User Key Consumer Information.
+  purposes String? @db.VarChar
+
+  /// The date and time the record was created.
+  created_at         DateTime             @db.Timestamptz
+  hub_external_users hub_external_users[]
+}
+
+/// Beta Tester User Information.
+///
+/// @namespace Actors
+model beta_user {
+  /// ---
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// Email address.
+  email String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+  /// Etc. etc.
+}
+
+/// Citizen authentication information.
+///
+/// `hub_citizens` is an entity that records the user's real name and
+/// mobile phone input information.
+///
+/// For reference, in Korea, real name authentication is required for e-commerce
+/// participants, so the `name` attribute is important. However, the situation is
+/// different overseas, so in reality, the `mobile` attribute is the most important,
+/// and individual user identification is also based on this `mobile`.
+///
+/// Of course, real name and mobile phone authentication information are encrypted
+/// and stored.
+///
+/// @namespace Actors
+/// @erd Deposits
+/// @author Samchon
+model hub_citizens {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliated channel
+  ///
+  /// This is to manage personal information separately for each channel,
+  /// and also to recognize cases where the same citizen is authenticated
+  /// on different channels.
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// Mobile phone number.
+  ///
+  /// It is stored encrypted, so like searches are not possible.
+  mobile String @db.VarChar
+
+  /// Real name or a similar name.
+  ///
+  /// It is stored encrypted, so like searches are absolutely impossible.
+  name String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date of record deletion.
+  ///
+  /// This is mainly due to destruction of personal information.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel hub_channels @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+
+  /// @minItems 1
+  customers         hub_customers[]
+  members           hub_members[]
+  deposit_donations hub_deposit_donations[]
+  deposit_histories hub_deposit_histories[]
+
+  balance                    mv_hub_deposit_balances?
+  coupon_citizen_inventories mv_hub_coupon_citizen_inventories[]
+  hub_external_users         hub_external_users[]
+
+  @@unique([hub_channel_id, mobile])
+  @@index([mobile])
+  @@index([name])
+  @@index([created_at])
+}
+
+/// General member account.
+///
+/// `hub_members` is an entity that represents a case where
+/// {@link hub_customers customers} register as general members in this system.
+///
+/// If there are records such as {@link hub_sellers} or
+/// {@link hub_administrators} that refer to this `hub_members`, the customer is
+/// a person who also registers and acts as a seller and administrator member.
+///
+/// @namespace Actors
+/// @erd Actors
+/// @erd Repositories
+/// @author Samchon
+model hub_members {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_citizens.id} of the citizenship
+  ///
+  /// @format uuid
+  hub_citizen_id String? @db.Uuid
+
+  /// nickname.
+  nickname String @db.VarChar
+
+  /// Login password.
+  password String? @db.VarChar
+
+  profile_background_color String? @db.VarChar
+
+  /// Date and time of membership registration.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of member information modification.
+  updated_at DateTime @db.Timestamptz
+
+  /// Date and time of membership withdrawal.
+  withdrawn_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel hub_channels  @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  citizen hub_citizens? @relation(fields: [hub_citizen_id], references: [id], onDelete: Cascade)
+
+  administrator hub_administrators?
+  seller        hub_sellers?
+  account       studio_accounts?
+
+  /// @minItems 1
+  customers                                     hub_customers[]
+  emails                                        hub_member_emails[]
+  employees                                     studio_enterprise_employees[]
+  external_user                                 hub_external_users[]
+  elite                                         hub_member_elites[]
+  villain                                       hub_member_villains[]
+  hub_sales                                     hub_sales[]
+  hub_bookmark_sales                            hub_bookmark_sales[]
+  hub_sale_snapshot_inquiry_likes               hub_sale_snapshot_inquiry_likes[]
+  studio_enterprises                            studio_enterprises[]
+  studio_enterprise_employee_appointments       studio_enterprise_employee_appointments[]
+  studio_enterprise_teams                       studio_enterprise_teams[]
+  studio_enterprise_team_companion_appointments studio_enterprise_team_companion_appointments[]
+  hub_order_good_issues                         hub_order_good_issues[]
+  hub_order_good_issue_comments                 hub_order_good_issue_comments[]
+  hub_order_good_issue_fees                     hub_order_good_issue_fees[]
+  hub_order_good_issue_fee_accepts              hub_order_good_issue_fee_accepts[]
+  hub_deposits                                  hub_deposits[]
+  hub_deposit_charges                           hub_deposit_charges[]
+  hub_deposit_donations                         hub_deposit_donations[]
+  studio_account_llm_keys                       studio_account_llm_keys[]
+  studio_account_secrets                        studio_account_secrets[]
+  studio_account_secret_values                  studio_account_secret_values[]
+  studio_meta_chat_sessions                     studio_meta_chat_sessions[]
+  studio_meta_chat_session_connections          studio_meta_chat_session_connections[]
+  studio_meta_chat_session_shares               studio_meta_chat_session_shares[]
+  hub_carts                                     hub_carts[]
+  hub_orders                                    hub_orders[]
+  hub_authenticate_tokens                       hub_authenticate_tokens[]
+  hub_sale_snapshot_view_histories              hub_sale_snapshot_view_histories[]
+  hub_sale_audits                               hub_sale_audits[]
+  hub_sale_audit_emendations                    hub_sale_audit_emendations[]
+  hub_sale_audit_rejections                     hub_sale_audit_rejections[]
+  hub_sale_audit_approvals                      hub_sale_audit_approvals[]
+  hub_sale_audit_comments                       hub_sale_audit_comments[]
+  hub_sale_snapshot_inquiries                   hub_sale_snapshot_inquiries[]
+  hub_sale_snapshot_inquiry_answers             hub_sale_snapshot_inquiry_answers[]
+  hub_sale_snapshot_inquiry_comments            hub_sale_snapshot_inquiry_comments[]
+  hub_coupons                                   hub_coupons[]
+  hub_coupon_tickets                            hub_coupon_tickets[]
+  studio_applications                           studio_applications[]
+  hub_customer_email_verifications              hub_customer_email_verifications[]
+
+  @@unique([hub_channel_id, nickname])
+  @@unique([hub_citizen_id])
+  @@index([nickname(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([created_at])
+}
+
+/// Member's email address.
+///
+/// This hub system allows one member to have multiple email accounts.
+///
+/// This is because market participants are corporate entities and there is 
+/// room for them to work as freelancers for multiple companies.
+///
+/// @namespace Actors
+/// @author Samchon
+model hub_member_emails {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliated channel
+  ///
+  /// This is information that can be obtained from {@link hub_members.channel_id},
+  /// but it is being recorded in duplicate to form a unique key constraint.
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String @db.Uuid
+
+  /// Email address.
+  ///
+  /// @format email
+  value String @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel hub_channels @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  member  hub_members  @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_channel_id, value])
+  @@unique([hub_member_id, value])
+  @@index([value(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+/// Seller information.
+///
+/// `hub_sellers` is an entity that literally means a seller, and refers to 
+/// a person who registers as a {@link hub_members member} in this system, 
+/// registers {@link hub_sales API items}, and conducts {@link hub_orders sales} 
+/// activities.
+///
+/// Note that `hub_sellers`, unlike {@link hub_external_users external users} 
+/// or {@link hub_customers}, where non-member activities are possible, only those 
+/// who have registered as members can conduct sales activities. And 
+/// {@link hub_citizens real name authentication} is also required.
+///
+/// @namespace Actors
+/// @author Samchon
+model hub_sellers {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String @db.Uuid
+
+  // /// 귀속 회사의 {@link hub_companies.id}
+  // ///
+  // /// @format uuid
+  // hub_company_id String @db.Uuid
+
+  /// Seller membership registration date.
+  ///
+  /// May be different from membership registration date.
+  created_at DateTime @db.Timestamptz
+
+  /// Seller membership withdrawal date.
+  ///
+  /// It may be different from the membership withdrawal date.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  /// Affiliated member information.
+  member hub_members @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  /// List of restrictions on discount coupons for sellers.
+  ///
+  /// Conditions that apply (or exclude) only to products registered by 
+  /// a specific seller.
+  coupon_criteria_of_sellers hub_coupon_criteria_of_sellers[]
+
+  /// List of products for sale, so-called performance.
+  order_goods hub_order_goods[]
+
+  @@unique([hub_member_id])
+  @@index([created_at])
+}
+
+/// Administrator.
+///
+/// `hub_administrators` is an entity that literally means administrator, 
+/// and refers to those who have registered as a {@link hub_administrators member} 
+/// in this system and perform management activities such as 
+/// {@link hub_sale_audits audit}.
+///
+/// Note that `hub_administrators` is different from 
+/// {@link hub_external_users external users} or {@link hub_customers}, which can 
+/// perform non-member activities, and only those who have registered as members 
+/// can perform management activities. 
+/// 
+/// In addition, {@link hub_citizens real name authentication} is also required.
+///
+/// @namespace Actors
+/// @author Samchon
+model hub_administrators {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String @db.Uuid
+
+  /// Date of registration as administrator.
+  ///
+  /// Different from the date of membership registration.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  /// Affiliated member information.
+  member hub_members @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_member_id])
+  @@index([created_at])
+}
+
+/// Elite Member
+///
+/// `hub_member_elites` is an entity that literally means elite member, 
+/// and refers to those who join this system as a {@link hub_members member} and 
+/// perform privileged activities such as the {@link hub_member_elites whitelist}.
+///
+/// @namespace Actors
+/// @author Asher
+model hub_member_elites {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// Whitelist grantor's {@link hub_administrator.id}
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Reason for whitelisting the user.
+  reason String? @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel  hub_channels  @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+}
+
+/// Villain Member
+///
+/// `hub_member_villains` is an entity that literally means a villain member. 
+/// It refers to a person who has joined this system as a 
+/// {@link hub_members member} and has committed misdeeds such as 
+/// {@link hub_member_villains blacklist}.
+///
+/// @namespace Actors
+/// @author Asher
+model hub_member_villains {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// @format uuid
+  hub_member_id String @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_administrator.id} of the blacklist grantor
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Reason for blacklisting the user.
+  reason String? @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  channel  hub_channels  @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+  member   hub_members   @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+}
+
+/// Email Verification List
+///
+/// `hub_customer_email_verifications` is entity that manage the email verification list.
+///
+/// @namespace Actors
+/// @author Michael
+model hub_customer_email_verifications {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_members.id} of affiliated members
+  ///
+  /// record the member associated with email verification.
+  ///
+  /// @format uuid
+  hub_member_id String? @db.Uuid
+
+  /// {@link hub_channels.id} of the affiliate channel
+  ///
+  /// @format uuid
+  hub_channel_id String @db.Uuid
+
+  /// {@link hub_customers.id} of affiliate members
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Email.
+  email String @db.VarChar
+
+  /// verification code.
+  code String @db.VarChar
+
+  /// verification type.
+  ///
+  /// for example. `sign-up`
+  type String @db.VarChar
+
+  /// The date and time of being verified.
+  verified_at DateTime? @db.Timestamptz
+
+  /// The date and time of the verification will be expired.
+  expired_at DateTime @db.Timestamptz
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// Date and time of record deletion.
+  deleted_at DateTime? @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  member   hub_members?  @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+  channel  hub_channels  @relation(fields: [hub_channel_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([email, code])
+}

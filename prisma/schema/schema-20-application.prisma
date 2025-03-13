@@ -1,0 +1,311 @@
+/// Applications
+///
+/// An `studio_applications` refers to an action agent created from a customer by connecting
+/// a swagger or system prompt to a chat agent. Planning terms may be different.
+/// The customer may subscribe to an `studio_applications` created by another person
+/// or create a chat session using an `studio_applications` created by the user.
+///
+/// @namespace Applications
+/// @author kakasoo
+model studio_applications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sections.id} in the attributed section
+  ///
+  /// @format uuid
+  hub_section_id String @db.Uuid
+
+  /// {@link hub_customers.id} of the seller customer who registered the item
+  ///
+  /// @format uuid
+  hub_customer_id String @db.Uuid
+
+  /// Affiliate member's {@link hub_members.id}
+  ///
+  /// @format uuid.
+  hub_member_id String @db.Uuid
+
+  /// Type of application
+  ///
+  /// It can be only 'public', 'private', 'protected'.
+  type String
+
+  /// Application status, pending
+  ///
+  /// It can be 'temp', 'pending', 'approved'.
+  status String
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+
+  /// Snapshots
+  ///
+  /// logically, can not be empty.
+  application_snapshots studio_application_snapshots[]
+
+  /// Section
+  section hub_sections @relation(fields: [hub_section_id], references: [id], onDelete: Cascade)
+
+  /// Customer
+  customer hub_customers @relation(fields: [hub_customer_id], references: [id], onDelete: Cascade)
+
+  member hub_members @relation(fields: [hub_member_id], references: [id], onDelete: Cascade)
+
+  /// Chat Sessions
+  // chat_sessions studio_chat_sessions[]
+}
+
+/// Listing snapshot information.
+///
+/// `studio_application_snapshots` is an entity that represents snapshots of 
+/// {@link studio_applications listings}. And `studio_application_snapshots` records are created 
+/// whenever a new listing is created or an existing listing is modified.
+///
+/// @namespace Applications
+/// @author kakasoo
+model studio_application_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_applications.id} of the property
+  ///
+  /// @format uuid
+  studio_application_id String @db.Uuid
+
+  /// application name
+  name String
+
+  /// application representative image
+  ///
+  /// @format uri
+  representative_image String?
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  //----
+  // RELATIONS
+  //----
+  application studio_applications @relation(fields: [studio_application_id], references: [id])
+
+  to_user_prompts studio_application_snapshot_user_prompts[]
+
+  application_swagger_accesses studio_application_swagger_accesses[]
+
+  studio_application_snapshot_prompts studio_application_snapshot_prompts[]
+
+  @@index([studio_application_id, created_at])
+}
+
+/// System prompt.
+///
+/// The prompt message that the system will show to the user.
+///
+/// @namespace Applications
+/// @author kakasoo
+model studio_application_snapshot_prompts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// @format uuid
+  studio_application_snapshot_id String @db.Uuid
+
+  /// type of prompts
+  ///
+  /// It can be 'system', 'user', 'assistant'
+  type String
+
+  /// subtype of prompts
+  ///
+  /// @default 'text'
+  subtype String
+
+  /// Format of the body.
+  ///
+  /// Similar meanings of extensions: html, md, txt, etc.
+  format String @db.VarChar
+
+  /// Title of the article
+  title String @db.VarChar
+
+  /// Article body content
+  body String
+
+  /// Sequence
+  ///
+  /// 
+  sequence Int @db.Integer
+
+  ///
+
+  //----
+  // RELATIONS
+  //----
+  /// Last snapshot information.
+  ///
+  /// NOT NULL means that this record is the last snapshot.
+
+  //----
+  // RELATIONS
+  //----
+  application_snapshot studio_application_snapshots @relation(fields: [studio_application_snapshot_id], references: [id])
+
+  /// Attachment list
+  to_files studio_system_prompt_files[]
+
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([body(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+/// @namespace Applications
+/// @author kakasoo
+model studio_system_prompt_files {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link bbs_article_snapshots.id} of the attributed article snapshot
+  ///
+  /// @format uuid
+  studio_application_system_prompt_id String @db.Uuid
+
+  /// {@link attachment_files.id}
+  ///
+  /// @format uuid of attachment file
+  attachment_file_id String @db.Uuid
+
+  /// The order in which attachments are placed in the article snapshot.
+  ///
+  /// @format int
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  system_prompt studio_application_snapshot_prompts @relation(fields: [studio_application_system_prompt_id], references: [id], onDelete: Cascade)
+  file          attachment_files                    @relation(fields: [attachment_file_id], references: [id], onDelete: Cascade)
+
+  @@index([studio_application_system_prompt_id])
+  @@index([attachment_file_id])
+}
+
+/// Accesses to the swagger the application has
+///
+/// Each application can connect {@link hub_sale_snapshot_units unit} purchased or
+/// contracted by the customer in the creation stage. The connected
+/// {@link hub_sale_snapshot_units unit} can be accessed by applications
+/// in the future and used as a target for function calling.
+///
+/// @namespace Applications
+/// @author kakasoo
+model studio_application_swagger_accesses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link studio_application_snapshots.id} of the application snapshot
+  ///
+  /// @format uuid
+  studio_application_snapshot_id String @db.Uuid
+
+  /// {@link hub_sale_snapshot_units.id} of the unit
+  ///
+  /// @format uuid
+  hub_sale_snapshot_unit_id String @db.Uuid
+
+  //----
+  // RELATIONS
+  //----
+  application_snapshots studio_application_snapshots @relation(fields: [studio_application_snapshot_id], references: [id])
+
+  sale_snapshot_units hub_sale_snapshot_units @relation(fields: [hub_sale_snapshot_unit_id], references: [id])
+
+  @@unique([studio_application_snapshot_id, hub_sale_snapshot_unit_id])
+}
+
+/// Example user prompts for chatter
+///
+/// @namespace Applications
+/// @author kakasoo
+model studio_application_snapshot_user_prompts {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// The icon URL to be displayed.
+  ///
+  /// @format uri
+  icon_url String?
+
+  /// {@link hub_sale_snapshots} of the attributed snapshot
+  ///
+  /// @format uuid
+  studio_application_snapshot_id String @db.Uuid
+
+  /// Sequence.
+  sequence Int @db.Integer
+
+  //----
+  // RELATIONS
+  //----
+  application_snapshots studio_application_snapshots @relation(fields: [studio_application_snapshot_id], references: [id])
+
+  to_translates studio_application_snapshot_user_prompt_translates[]
+}
+
+/// @namespace Applications
+/// @author kakasoo
+model studio_application_snapshot_user_prompt_translates {
+  //----
+  // COLUMNS
+  //----
+  /// @format uuid
+  id String @id @db.Uuid
+
+  /// {@link hub_sale_snapshot_user_prompts.id}
+  ///
+  /// @format uuid
+  studio_application_snapshot_user_prompt_id String @db.Uuid
+
+  /// Examples of prompts that the user can enter.
+  value String @db.VarChar
+
+  /// Whether it's original swagger or not.
+  original Boolean @db.Boolean
+
+  /// Swagger language code.
+  lang_code String? @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  application_snapshot_user_prompts studio_application_snapshot_user_prompts @relation(fields: [studio_application_snapshot_user_prompt_id], references: [id])
+}

@@ -1,0 +1,66 @@
+/// URL Swagger Information.
+///
+/// Table that stores URL Swagger Information.
+///
+/// @namespace External
+/// @author Asher
+model hub_external_swagger_documents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @Format uuid
+  id String @id @db.Uuid
+
+  /// Swagger URL.
+  src_url String @db.VarChar(80000)
+
+  /// Swagger version.
+  version String? @db.VarChar
+
+  /// The date and time the record was created.
+  created_at DateTime @db.Timestamptz
+
+  /// @minItems 1
+  to_translates hub_external_swagger_document_translates[]
+
+  @@unique([src_url, version])
+}
+
+/// URL Swagger Translation Information.
+///
+/// Table that stores URL Swagger Translation Information.
+///
+/// @namespace External
+/// @author Asher
+model hub_external_swagger_document_translates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  ///
+  /// @Format uuid
+  id String @id @db.Uuid
+
+  /// swagger의 {@link url_swagger.id}
+  ///
+  /// @format uuid
+  hub_external_swagger_document_id String @db.Uuid
+
+  /// Whether it's original swagger or not.
+  original Boolean @db.Boolean
+
+  /// Swagger's S3 URL.
+  url String @db.VarChar(80000)
+
+  /// Swagger language code.
+  lang_code String @db.VarChar
+
+  //----
+  // RELATIONS
+  //----
+  swagger hub_external_swagger_documents @relation(fields: [hub_external_swagger_document_id], references: [id], onDelete: Cascade)
+
+  @@unique([hub_external_swagger_document_id, lang_code])
+}
