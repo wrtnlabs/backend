@@ -2,7 +2,6 @@ import cp from "child_process";
 import { MutexServer } from "mutex-server";
 
 import { HubBackend } from "../src/HubBackend";
-import { HubGlobal } from "../src/HubGlobal";
 import { HubMutex } from "../src/HubMutex";
 import { PaymentSetupWizard } from "../src/setup/PaymentSetupWizard";
 import { TestAutomation } from "./TestAutomation";
@@ -16,10 +15,7 @@ interface IBackend {
 
 const main = async (): Promise<void> => {
   await TestAutomation.execute<IBackend>({
-    open: async (options: TestAutomation.IOptions) => {
-      HubGlobal.testing = true;
-      HubGlobal.mock = options.mock;
-
+    open: async () => {
       const mutex: MutexServer<HubMutex.IHeader> = await HubMutex.master();
       const proxy: cp.ChildProcess = cp.fork(
         `${__dirname}/../src/executable/proxy.js`,
