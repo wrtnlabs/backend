@@ -1,11 +1,13 @@
 import { DynamicExecutor, RandomGenerator } from "@nestia/e2e";
-import { IHubChannel } from "@wrtnlabs/os-api/lib/structures/hub/systematic/IHubChannel";
 import chalk from "chalk";
 import { sleep_for } from "tstl";
+
+import { IHubChannel } from "@wrtnlabs/os-api/lib/structures/hub/systematic/IHubChannel";
 
 import { HubChannelProvider } from "../src/providers/hub/systematic/HubChannelProvider";
 
 import { HubConfiguration } from "../src/HubConfiguration";
+import { HubGlobal } from "../src/HubGlobal";
 import HubApi from "../src/api";
 import { HubSetupWizard } from "../src/setup/HubSetupWizard";
 import { PaymentSetupWizard } from "../src/setup/PaymentSetupWizard";
@@ -31,6 +33,10 @@ export namespace TestAutomation {
   export const execute = async <T>(props: IProps<T>): Promise<void> => {
     // CONFIGURE
     const options: IOptions = await getOptions();
+
+    HubGlobal.testing = true;
+    HubGlobal.mock = options.mock;
+
     if (options.reset || !PaymentSetupWizard.prepared())
       await StopWatch.trace("Payment Server")(() => PaymentSetupWizard.setup());
     if (options.reset) {
