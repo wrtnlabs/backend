@@ -125,10 +125,7 @@ const getOptions = () =>
         options.trace = options.trace !== ("false" as any);
         options.mock = options.mock !== ("false" as any);
         options.simultaneous = Number(
-          options.simultaneous ??
-            (await prompt.number("simultaneous")(
-              "Number of simultaneous requests to make",
-            )),
+          options.simultaneous ?? options.simultaneous === 1,
         );
         if (isNaN(options.simultaneous)) options.simultaneous = 1;
         return options as TestAutomation.IOptions;
