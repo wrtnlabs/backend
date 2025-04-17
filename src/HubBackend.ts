@@ -8,6 +8,7 @@ import FastifyMulter from "fastify-multer";
 import { Logger } from "nestjs-pino";
 import { sleep_for } from "tstl";
 
+import { TestAutomation } from "../test/TestAutomation";
 import { HubConfiguration } from "./HubConfiguration";
 import { HubGlobal } from "./HubGlobal";
 import { HubModule } from "./HubModule";
@@ -16,7 +17,10 @@ import { HttpExceptionFilter } from "./pipes/HttpExceptionFilter";
 export class HubBackend {
   private application_?: NestFastifyApplication;
 
-  public async open(port?: number): Promise<void> {
+  public async open(
+    port?: number,
+    options?: Partial<TestAutomation.IOptions>,
+  ): Promise<void> {
     //----
     // OPEN THE BACKEND SERVER
     //----
@@ -38,10 +42,13 @@ export class HubBackend {
         root: `${HubConfiguration.ROOT}/packages/public`,
         prefix: "/public",
       });
-      // this.application_.useLogger(this.application_.get(Logger));
-      // this.application_.useGlobalFilters(
-      //   new HttpExceptionFilter(this.application_.getHttpAdapter()),
-      // );
+
+      if (options !== undefined && options.trace === true) {
+        this.application_.useLogger(this.application_.get(Logger));
+        this.application_.useGlobalFilters(
+          new HttpExceptionFilter(this.application_.getHttpAdapter()),
+        );
+      }
     } else {
       this.application_.useLogger(this.application_.get(Logger));
       this.application_.useGlobalFilters(

@@ -15,7 +15,7 @@ interface IBackend {
 
 const main = async (): Promise<void> => {
   await TestAutomation.execute<IBackend>({
-    open: async () => {
+    open: async (options: TestAutomation.IOptions) => {
       const mutex: MutexServer<HubMutex.IHeader> = await HubMutex.master();
       const proxy: cp.ChildProcess = cp.fork(
         `${__dirname}/../src/executable/proxy.js`,
@@ -25,7 +25,7 @@ const main = async (): Promise<void> => {
       );
       const payment: cp.ChildProcess = await PaymentSetupWizard.start();
       const main: HubBackend = new HubBackend();
-      await main.open();
+      await main.open(undefined, options);
 
       return {
         main,
