@@ -43,7 +43,7 @@ export class HubBackend {
         prefix: "/public",
       });
 
-      if (options !== undefined && options.trace === true) {
+      if (options?.logger === true) {
         this.application_.useLogger(this.application_.get(Logger));
         this.application_.useGlobalFilters(
           new HttpExceptionFilter(this.application_.getHttpAdapter()),

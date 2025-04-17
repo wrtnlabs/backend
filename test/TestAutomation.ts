@@ -26,6 +26,7 @@ export namespace TestAutomation {
     include?: string[];
     exclude?: string[];
     trace: boolean;
+    logger: boolean;
     mock: boolean;
     simultaneous: number;
   }
@@ -116,6 +117,7 @@ const getOptions = () =>
       command.option("--include <string...>", "include feature files");
       command.option("--exclude <string...>", "exclude feature files");
       command.option("--trace <boolean>", "trace detailed errors");
+      command.option("--logger <boolean>", "Enable logging");
       command.option("--mock <boolean>", "mock LLM api by cost reason");
 
       return action(async (options) => {
@@ -124,10 +126,8 @@ const getOptions = () =>
         options.reset ??= await prompt.boolean("reset")("Reset local DB");
         options.trace = options.trace !== ("false" as any);
         options.mock = options.mock !== ("false" as any);
-        options.simultaneous = Number(
-          options.simultaneous ?? options.simultaneous === 1,
-        );
-        if (isNaN(options.simultaneous)) options.simultaneous = 1;
+        options.logger = String(options.logger) === "true";
+        options.simultaneous = Math.max(1, Number(options.simultaneous) || 1);
         return options as TestAutomation.IOptions;
       });
     },
