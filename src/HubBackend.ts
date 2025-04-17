@@ -16,7 +16,10 @@ import { HttpExceptionFilter } from "./pipes/HttpExceptionFilter";
 export class HubBackend {
   private application_?: NestFastifyApplication;
 
-  public async open(port?: number): Promise<void> {
+  public async open(
+    port?: number,
+    testOptions?: { logger?: boolean },
+  ): Promise<void> {
     //----
     // OPEN THE BACKEND SERVER
     //----
@@ -38,10 +41,13 @@ export class HubBackend {
         root: `${HubConfiguration.ROOT}/packages/public`,
         prefix: "/public",
       });
-      // this.application_.useLogger(this.application_.get(Logger));
-      // this.application_.useGlobalFilters(
-      //   new HttpExceptionFilter(this.application_.getHttpAdapter()),
-      // );
+
+      if (testOptions?.logger === true) {
+        this.application_.useLogger(this.application_.get(Logger));
+        this.application_.useGlobalFilters(
+          new HttpExceptionFilter(this.application_.getHttpAdapter()),
+        );
+      }
     } else {
       this.application_.useLogger(this.application_.get(Logger));
       this.application_.useGlobalFilters(
