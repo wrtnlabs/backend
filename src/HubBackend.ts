@@ -8,7 +8,6 @@ import FastifyMulter from "fastify-multer";
 import { Logger } from "nestjs-pino";
 import { sleep_for } from "tstl";
 
-import { TestAutomation } from "../test/TestAutomation";
 import { HubConfiguration } from "./HubConfiguration";
 import { HubGlobal } from "./HubGlobal";
 import { HubModule } from "./HubModule";
@@ -19,7 +18,7 @@ export class HubBackend {
 
   public async open(
     port?: number,
-    options?: Partial<TestAutomation.IOptions>,
+    testOptions?: { logger?: boolean },
   ): Promise<void> {
     //----
     // OPEN THE BACKEND SERVER
@@ -43,7 +42,7 @@ export class HubBackend {
         prefix: "/public",
       });
 
-      if (options?.logger === true) {
+      if (testOptions?.logger === true) {
         this.application_.useLogger(this.application_.get(Logger));
         this.application_.useGlobalFilters(
           new HttpExceptionFilter(this.application_.getHttpAdapter()),
